@@ -36,6 +36,9 @@ class String
 		#替换<br> 为 文本的 换行 
     def br_to_new_line  
         self.gsub('<br>', "\n")  
+    end      
+    def color_str_to_line  
+      self.gsub(%r[<[^>]*>], '').gsub(/\t|\n|\r/, '')
     end  
 		#去掉所有的html标签，但是保留 文字
     def strip_tag  
