@@ -1,3 +1,0 @@
-0-http://www.autohome.com.cn/spec/7959/config.html
-1-http://www.autohome.com.cn/spec/7600/config.html
-2-http://www.autohome.com.cn/spec/15865/config.html

@@ -40,6 +40,9 @@ class String
     def color_str_to_line  
       self.gsub(%r[<[^>]*>], '').gsub(/\t|\n|\r/, '')
     end  
+    def strip_sohu_txt_tag
+			self.gsub(%r[<br>], "_").gsub(%r[<[^>]*>], '')
+		end
 		#去掉所有的html标签，但是保留 文字
     def strip_tag  
         self.gsub(%r[<[^>]*>], '')  

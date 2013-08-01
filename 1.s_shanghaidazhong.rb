@@ -24,7 +24,7 @@ class GetCarAndDetail
   def read_chexi
     url = "http://db.auto.sohu.com/subbrand_#{@sid}/"
     @doc = fetch_chexing(url)
-   
+    status = 'init'
     @doc.xpath('//table[@id="carlistall"]//td/a[1]').each do |item|
     
       puts chexi = item.at_xpath('text()').to_s.strip
@@ -33,42 +33,80 @@ class GetCarAndDetail
         chexi = item.at_xpath('@title').to_s.strip
       end
       chexi_url = item.at_xpath('@href').to_s.strip
-      puts chexi_num = chexi_url.split('/')[-1].split('_')[-1]
-      next
+      
+      chexi_num = chexi_url.split('/')[-1].split('_')[-1]
+      
       
       
       fetch_chexing(chexi_url)
       puts @doc_chexing.at_xpath('//title').to_s
-      @doc_chexing.xpath('//div[@class="class"]//a').each_with_index do |link_year, i|
-        #next if i == 0
-        puts year =link_year.at_xpath('text()').to_s.strip
-        next if year == "全部在售"
-        puts year_url = "http://car.bitauto.com#{link_year.at_xpath('@href')}"
-        fetch_chexing(year_url)
-        puts @doc_chexing.at_xpath('//title').to_s
+      
 
-        @doc_chexing.xpath('//table[@id = "compare"]/tr/td[1]/a').each do |chexing_link|
-          chexing = chexing_link.to_s.strip_tag
-          chexing_url = chexing_link.at_xpath('@href').to_s.strip
-          puts "#{i}-#{@maker}-#{chexi}-#{year}-#{chexing}\t#{chexing_url}"
-          puts pic_url = chexing_link.at_xpath('@href').to_s + "tupian/"
-          puts chexing_num = chexing_url.split('/')[-1]
-          status = 'init'
-          from_site = 'bitauto'
+      #当前展现的车型
+      @doc_chexing.xpath("//table[@class = 'b jsq']//td[@class = 'ftdleft']").each do |item|
+        puts chexing = item.xpath("a/text()")[0].to_s
+        puts chexing_num = item.xpath("a/@href")[0].to_s
+        puts chexing_num = chexing_num.scan(/\d+/)[0].to_s
+        #http://db.auto.sohu.com/model_2251/photo_m120004.shtml
+        
+        puts year = chexing[0..5]
+        puts chexing = chexing[5..-1].strip
+        puts pic_url = "http://db.auto.sohu.com/model_#{chexi_num}/photo_m#{chexing_num}.shtml"
+        
+        @car = Car.find_or_create_by(:chexing_num => chexing_num, :from_site => @from_site)
+        @car.maker = @maker
+        @car.chexi = chexi
+        @car.chexing = chexing
+        @car.year = year
+        @car.chexi_num = chexi_num
+        @car.chexing_num = chexing_num
+        @car.pic_url = pic_url
+        @car.status = status
+        @car.save
           
-          @car = Car.find_or_create_by(:chexing_num => chexing_num, :from_site => from_site)
+        
+      end	
+
+      #当前 隐藏的车型
+      puts @doc_chexing.xpath("//table[@class = 'hid']").length
+      @doc_chexing.xpath("//table[@class = 'hid']").each do |object|
+       
+
+
+        puts object.xpath("tr/td[@class = 'ftdleft']").length
+        #break
+        object.xpath("tr/td[@class = 'ftdleft']").each do |item|
+          chexing = item.xpath("a/text()")[0].to_s.strip
+          
+          if object.at_xpath('@id') 
+            year = object.at_xpath('@id')
+            year = year.to_s.gsub('tms_t_','')
+            year = "#{year}款"       
+          else
+            puts year = chexing[0..5]
+            puts chexing = chexing[5..-1].strip        
+          end
+          
+          puts chexing_num = item.xpath("a/@href")[0].to_s
+          puts chexing_num = chexing_num.scan(/\d+/)[0].to_s
+          
+          puts pic_url = "http://db.auto.sohu.com/model_#{chexi_num}/photo_m#{chexing_num}.shtml"
+          
+          @car = Car.find_or_create_by(:chexing_num => chexing_num, :from_site => @from_site)
           @car.maker = @maker
           @car.chexi = chexi
-          @car.chexing = chexing[5..-1].strip
+          @car.chexing = chexing
           @car.year = year
           @car.chexi_num = chexi_num
           @car.chexing_num = chexing_num
           @car.pic_url = pic_url
           @car.status = status
-          @car.from_site = from_site
           @car.save
+
         end
       end
+#break
+      
       #puts item.at_xpath('h3/a/text()').to_s.strip.split(' ')[0]
     end
   end
@@ -87,46 +125,37 @@ class GetCarAndDetail
       fetch_chexing(car.pic_url)
       puts car.pic_url
       
-      have_error = @doc_chexing.xpath('//div[@class="error_page"]').length
-      if have_error == 1
+      puts have_error = @doc_chexing.xpath('//a[@class="thisA"]').length
+
+      if have_error == 0
         puts 'no picture'
         puts car.pic_num = 0
         car.save
       else
         puts 'have picture'
-        @doc_chexing.xpath('//h3[@class="pic13_h3"]/span/a').each do |object|
-          if object.at_xpath('text()').to_s == '外观'
-            puts new_pic_url = object.at_xpath('@href').to_s
-            fetch_img(new_pic_url)
-            imgs = []
-            @doc_img.xpath('//ul[@class="pic_t_box pic_150100 pic13_150100"]/li/a').each_with_index do |item, j|
-              #break if j > 9
+        imgs = []
+        @doc_chexing.xpath('//div[@class="bd"][1]//img').each_with_index do |object, j|
+          puts picture_url = object.at_xpath('@src').to_s
+          puts picture_url = picture_url.gsub('150', 'f')
+          #puts picture_url = picture_url.gsub('150', '800')
+          puts name = "#{car.maker}_#{car.chexi}_#{car.year}_#{car.chexing}_#{j+1}"
               
-              puts "#{i}-#{j+1}"
-              puts picture_url = item.at_css('img').attr('src').to_s
-              puts name = "#{car.maker}_#{car.chexi}_#{car.year}_#{car.chexing}_#{j+1}"
-              
-              category = item.at_css('img').attr('alt').to_s
-              back = picture_url.from(-4)
-              picture_url = picture_url.to(-5) + '2' + back              
-              @pic = Pic.new
-              @pic.name = name
-              @pic.url = picture_url
-              @pic.note = category
-              @pic.num = j
-              imgs << @pic
-            end
-            car.pics =  imgs
-            puts car.pic_num = imgs.length
-            car.save            
-          end
+          puts "#{i}-#{j+1}"          
+          category = object.at_xpath('@alt').to_s
+          @pic = Pic.new
+          @pic.name = name
+          @pic.url = picture_url
+          @pic.note = category
+          @pic.num = j
+          imgs << @pic
+        end
+        car.pics =  imgs
+        puts car.pic_num = imgs.length
+        car.save 
+        print "saved"
         end
       end
-        
-      #break if have_error == 0
       
-      
-    end
   end
 
   def save_config
@@ -139,10 +168,32 @@ class GetCarAndDetail
     @cars.each_with_index do |car , i|
       puts "#{i}/#{length}"
       #next if i < 
-      url = "http://car.bitauto.com/#{car.chexi_num}/#{car.chexing_num}/"
+      url = "http://db.auto.sohu.com/model_#{car.chexi_num}/trim_#{car.chexing_num}.shtml"
 
       @doc = fetch_chexing(url)
+      
+      id_strs = []
+      id_names = []
       puts @doc.at_css("h1").text
+      @doc.xpath("//table[@id='trimArglist']/tbody/tr").each do |item|
+        id_str = item.at_xpath("@id").to_s
+        if id_str[0..4] == "SIP_C"
+          id_strs << id_str
+          id_name = item.at_xpath("th[@class='th1']//text()").to_s.strip_sohu_txt_tag.gsub('：', '')
+          id_names << id_name
+        end
+      end
+      next if id_strs.length != id_names.length
+      json_url = "http://db.auto.sohu.com/PARA/TRIMDATA/trim_data_#{car.chexing_num}.json"
+      json_html = safe_open(json_url , retries = 3, sleep_time = 0.2, headers = {})
+      
+      s_json = JSON.parse(json_html)
+      id_strs.each_with_index do |ids, j|
+        puts s_json[ids]
+      end
+      
+      
+break      
       car.parameters = nil
       @details = []
 
@@ -182,7 +233,7 @@ class GetCarAndDetail
     @cars = Car.where(:maker => @maker, :from_site => @from_site)
     puts @cars.length
     @cars.each_with_index do |car , c_i|
-      #next if c_i < 255
+      #next if c_i < 199
       car.pics.each_with_index do |item, p_i|
         #next if p_i < 1 && c_i < 1
         puts "#{c_i} -#{p_i}"
@@ -193,11 +244,9 @@ class GetCarAndDetail
         filename.gsub!("\\", "_")
         filename.gsub!("*", "_")
         filename.gsub!('"', "_")
-        File.open("./#{pre_folder}/#{filename}", "wb") do |saved_file|
-          open(item.url, 'rb') do |read_file|
-          saved_file.write(read_file.read)
-          end
-        end
+        puts item.url
+        
+        download_images(pre_folder, filename, item.url)
         #break
       end
       #break
@@ -241,7 +290,7 @@ class GetCarAndDetail
         str << "\t"
         
       end
-      qianzui = "#{car.maker}_#{car.chexi}_#{car.year}"
+      qianzui = "#{car.maker}_#{car.chexi}_#{car.year}_#{car.chexing}"
       @file_to_write.puts "#{car.maker}\t#{car.chexi}\t#{car.year}\t#{car.chexing}\t#{qianzui}\t#{car.pic_num}\t#{car.from_site}\t#{str}"
       #break
     end    
@@ -257,12 +306,27 @@ class GetCarAndDetail
     @doc_chexing = nil
     html_stream = safe_open(detail_url , retries = 3, sleep_time = 0.2, headers = {})
 #    begin
-#    html_stream.encode!('utf-8', 'gbk', :invalid => :replace) #忽略无法识别的字符
+    html_stream.encode!('utf-8', 'gbk', :invalid => :replace) #忽略无法识别的字符
 #    rescue StandardError,Timeout::Error, SystemCallError, Errno::ECONNREFUSED #有些异常不是标准异常  
 #     puts $!  
 #    end
     @doc_chexing = Nokogiri::HTML(html_stream)
   end  
+  
+  def download_images(pre_folder, filename, url)
+    begin
+      File.open("./#{pre_folder}/#{filename}", "wb") do |saved_file|
+        open(url, 'rb') do |read_file|
+        saved_file.write(read_file.read)
+        end
+      end  
+    rescue OpenURI::HTTPError, StandardError,Timeout::Error, SystemCallError, Errno::ECONNREFUSED
+      puts $! 
+      @file_to_write.puts $! 
+    end
+    
+  end
+  
   def fetch_img(detail_url)
     @doc_img = nil
     html_stream = safe_open(detail_url , retries = 3, sleep_time = 0.2, headers = {})
@@ -278,9 +342,9 @@ maker = "上海大众"
 folder = "s_shanghaidazong"
 from_site = "sohu"
 
-GetCarAndDetail.new(sid, maker).read_chexi
+#GetCarAndDetail.new(sid, maker, from_site).read_chexi
 #GetCarAndDetail.new(sid, maker, from_site).save_pic
-#GetCarAndDetail.new(sid, maker).down_pic(folder)
-#GetCarAndDetail.new(sid, maker).save_config
-#GetCarAndDetail.new(sid, maker).export_report
+#GetCarAndDetail.new(sid, maker, from_site).down_pic(folder)
+GetCarAndDetail.new(sid, maker, from_site).save_config
+#GetCarAndDetail.new(sid, maker, from_site).export_report
 
