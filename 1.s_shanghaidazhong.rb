@@ -22,18 +22,21 @@ class GetCarAndDetail
   end
   
   def read_chexi
-    url = "http://car.bitauto.com/#{@sid}/"
+    url = "http://db.auto.sohu.com/subbrand_#{@sid}/"
     @doc = fetch_chexing(url)
    
-    @doc.xpath('//div[@id="seriallist"]/dl/dd//b/a').each do |item|
+    @doc.xpath('//table[@id="carlistall"]//td/a[1]').each do |item|
     
       puts chexi = item.at_xpath('text()').to_s.strip
+      
       if item.at_xpath('@title') != nil
         chexi = item.at_xpath('@title').to_s.strip
       end
+      chexi_url = item.at_xpath('@href').to_s.strip
+      puts chexi_num = chexi_url.split('/')[-1].split('_')[-1]
+      next
       
-      puts chexi_num = item.at_xpath('@href').to_s.strip.gsub('/', '')
-      chexi_url = "http://car.bitauto.com/#{chexi_num}/"
+      
       fetch_chexing(chexi_url)
       puts @doc_chexing.at_xpath('//title').to_s
       @doc_chexing.xpath('//div[@class="class"]//a').each_with_index do |link_year, i|
@@ -269,14 +272,15 @@ class GetCarAndDetail
   
 end
 
-sid = 'shanghaidazhong' #it's bitauto 's  id
+#http://db.auto.sohu.com/subbrand_1073/
+sid = '1073' #it's bitauto 's  id
 maker = "上海大众"
 folder = "s_shanghaidazong"
 from_site = "sohu"
 
-#GetCarAndDetail.new(sid, maker).read_chexi
+GetCarAndDetail.new(sid, maker).read_chexi
 #GetCarAndDetail.new(sid, maker, from_site).save_pic
 #GetCarAndDetail.new(sid, maker).down_pic(folder)
 #GetCarAndDetail.new(sid, maker).save_config
-GetCarAndDetail.new(sid, maker).export_report
+#GetCarAndDetail.new(sid, maker).export_report
 
