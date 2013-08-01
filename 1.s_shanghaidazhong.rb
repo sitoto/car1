@@ -4,6 +4,7 @@ require 'rubygems'
 require 'nokogiri'
 require 'open-uri'
 require 'pp'
+require "cgi"
 require_relative "common"
 
 Dir.glob("#{File.dirname(__FILE__)}/app/models/*.rb") do |lib|
@@ -168,7 +169,7 @@ class GetCarAndDetail
     @cars.each_with_index do |car , i|
       puts "#{i}/#{length}"
       #next if i < 
-      url = "http://db.auto.sohu.com/model_#{car.chexi_num}/trim_#{car.chexing_num}.shtml"
+      puts url = "http://db.auto.sohu.com/model_#{car.chexi_num}/trim_#{car.chexing_num}.shtml"
 
       @doc = fetch_chexing(url)
       
@@ -184,14 +185,21 @@ class GetCarAndDetail
         end
       end
       next if id_strs.length != id_names.length
-      json_url = "http://db.auto.sohu.com/PARA/TRIMDATA/trim_data_#{car.chexing_num}.json"
+      puts json_url = "http://db.auto.sohu.com/PARA/TRIMDATA/trim_data_#{car.chexing_num}.json"
       json_html = safe_open(json_url , retries = 3, sleep_time = 0.2, headers = {})
-      
+      json_html = json_html.gsub("'", '"')
       s_json = JSON.parse(json_html)
-      id_strs.each_with_index do |ids, j|
-        puts s_json[ids]
-      end
       
+      id_strs.each_with_index do |ids, j|
+        puts "#{ids}-"
+        code_str = s_json[ids]
+        if code_str.nil?
+          puts ""
+        else
+          puts "#{CGI::unescape(code_str)}"
+        end
+      end
+      #搞定。。。明天继续存数据库
       
 break      
       car.parameters = nil
