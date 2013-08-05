@@ -24,73 +24,99 @@ class GetCarAndDetail
   
   def read_chexi
     url = "http://db.auto.sohu.com/subbrand_#{@sid}/"
+    url = "http://db.auto.sohu.com/model-list-brand-all.shtml"
+    
     @doc = fetch_chexing(url)
     status = 'init'
-    @doc.xpath('//table[@id="carlistall"]//td/a[1]').each do |item|
-    
-      puts chexi = item.at_xpath('text()').to_s.strip
+    @doc.xpath('//div[@class="blk_meta"]/div[@class="meta_con"]').each do |m_item|
       
-      if item.at_xpath('@title') != nil
-        chexi = item.at_xpath('@title').to_s.strip
-      end
-      chexi_url = item.at_xpath('@href').to_s.strip
-      
-      chexi_num = chexi_url.split('/')[-1].split('_')[-1]
-      
-      
-      
-      fetch_chexing(chexi_url)
-      puts @doc_chexing.at_xpath('//title').to_s
-      
-
-      #当前展现的车型
-      @doc_chexing.xpath("//table[@class = 'b jsq']//td[@class = 'ftdleft']").each do |item|
-        puts chexing = item.xpath("a/text()")[0].to_s
-        puts chexing_num = item.xpath("a/@href")[0].to_s
-        puts chexing_num = chexing_num.scan(/\d+/)[0].to_s
-        #http://db.auto.sohu.com/model_2251/photo_m120004.shtml
+      next if m_item.at_xpath("div[@class='brand_name']/a/text()").to_s.strip != @maker.to_s
+      m_item.xpath('ul/li//a[@class="name"]').each do |item|
+#        next
+        puts chexi = item.at_xpath('text()').to_s.strip
         
-        puts year = chexing[0..5]
-        puts chexing = chexing[5..-1].strip
-        puts pic_url = "http://db.auto.sohu.com/model_#{chexi_num}/photo_m#{chexing_num}.shtml"
+        if item.at_xpath('@title') != nil
+          chexi = item.at_xpath('@title').to_s.strip
+        end
+        chexi_url = item.at_xpath('@href').to_s.strip
+        chexi_url = "http://db.auto.sohu.com#{chexi_url}"
+        chexi_num = chexi_url.split('/')[-1].split('_')[-1]
+
+        fetch_chexing(chexi_url)
+        puts @doc_chexing.at_xpath('//title').to_s
+
         
-        @car = Car.find_or_create_by(:chexing_num => chexing_num, :from_site => @from_site)
-        @car.maker = @maker
-        @car.chexi = chexi
-        @car.chexing = chexing
-        @car.year = year
-        @car.chexi_num = chexi_num
-        @car.chexing_num = chexing_num
-        @car.pic_url = pic_url
-        @car.status = status
-        @car.save
-          
-        
-      end	
+        @doc_chexing.xpath("//div[@id='trm_data']/table").each do |object|
+          if object.at_xpath('@id').nil?
+            puts "show"
+            #puts object.to_s
+            #break
+            object.xpath("tr/td[@class = 'ftdleft']").each do |item|
+              puts chexing = item.xpath("a/text()")[0].to_s
+              puts chexing_num = item.xpath("a/@href")[0].to_s
+              puts chexing_num = chexing_num.scan(/\d+/)[0].to_s
+              #http://db.auto.sohu.com/model_2251/photo_m120004.shtml
 
-      #当前 隐藏的车型
-      puts @doc_chexing.xpath("//table[@class = 'hid']").length
-      @doc_chexing.xpath("//table[@class = 'hid']").each do |object|
-       
+              puts year = chexing[0..5].strip
+              puts chexing = chexing[5..-1].strip
+              puts pic_url = "http://db.auto.sohu.com/model_#{chexi_num}/photo_m#{chexing_num}.shtml"
+              
 
-
-        puts object.xpath("tr/td[@class = 'ftdleft']").length
-        #break
-        object.xpath("tr/td[@class = 'ftdleft']").each do |item|
-          chexing = item.xpath("a/text()")[0].to_s.strip
-          
-          if object.at_xpath('@id') 
-            year = object.at_xpath('@id')
-            year = year.to_s.gsub('tms_t_','')
-            year = "#{year}款"       
+              @car = Car.find_or_create_by(:chexing_num => chexing_num, :from_site => @from_site)
+              @car.maker = @maker
+              @car.chexi = chexi
+              @car.chexing = chexing
+              @car.year = year
+              @car.chexi_num = chexi_num
+              @car.chexing_num = chexing_num
+              @car.pic_url = pic_url
+              @car.status = status
+              @car.save
+            end
           else
-            puts year = chexing[0..5]
-            puts chexing = chexing[5..-1].strip        
+            puts "no #{object.at_xpath('@id')}"
+            puts object.xpath("tr/td[@class = 'ftdleft']").length
+            #break
+            object.xpath("tr/td[@class = 'ftdleft']").each do |item|
+              chexing = item.xpath("a/text()")[0].to_s.strip
+              
+              if object.at_xpath('@id') 
+                year = object.at_xpath('@id')
+                year = year.to_s.gsub('tms_t_','')
+                year = "#{year}款"       
+              else
+                puts year = chexing[0..5].strip
+                puts chexing = chexing[5..-1].strip        
+              end
+              
+              puts chexing_num = item.xpath("a/@href")[0].to_s
+              puts chexing_num = chexing_num.scan(/\d+/)[0].to_s
+              
+              puts pic_url = "http://db.auto.sohu.com/model_#{chexi_num}/photo_m#{chexing_num}.shtml"
+              
+              @car = Car.find_or_create_by(:chexing_num => chexing_num, :from_site => @from_site)
+              @car.maker = @maker
+              @car.chexi = chexi
+              @car.chexing = chexing
+              @car.year = year
+              @car.chexi_num = chexi_num
+              @car.chexing_num = chexing_num
+              @car.pic_url = pic_url
+              @car.status = status
+              @car.save    
+            end
           end
-          
+        end #end of object
+        next
+        #当前展现的车型
+        @doc_chexing.xpath("//table[@class = 'b jsq']//td[@class = 'ftdleft']").each do |item|
+          puts chexing = item.xpath("a/text()")[0].to_s
           puts chexing_num = item.xpath("a/@href")[0].to_s
           puts chexing_num = chexing_num.scan(/\d+/)[0].to_s
+          #http://db.auto.sohu.com/model_2251/photo_m120004.shtml
           
+          puts year = chexing[0..5]
+          puts chexing = chexing[5..-1].strip
           puts pic_url = "http://db.auto.sohu.com/model_#{chexi_num}/photo_m#{chexing_num}.shtml"
           
           @car = Car.find_or_create_by(:chexing_num => chexing_num, :from_site => @from_site)
@@ -103,13 +129,50 @@ class GetCarAndDetail
           @car.pic_url = pic_url
           @car.status = status
           @car.save
+            
+          
+        end	
 
+        #当前 隐藏的车型
+        puts @doc_chexing.xpath("//table[@class = 'hid']").length
+        @doc_chexing.xpath("//table[@class = 'hid']").each do |object|
+
+          puts object.xpath("tr/td[@class = 'ftdleft']").length
+          #break
+          object.xpath("tr/td[@class = 'ftdleft']").each do |item|
+            chexing = item.xpath("a/text()")[0].to_s.strip
+            
+            if object.at_xpath('@id') 
+              year = object.at_xpath('@id')
+              year = year.to_s.gsub('tms_t_','')
+              year = "#{year}款"       
+            else
+              puts year = chexing[0..5].strip
+              puts chexing = chexing[5..-1].strip        
+            end
+            
+            puts chexing_num = item.xpath("a/@href")[0].to_s
+            puts chexing_num = chexing_num.scan(/\d+/)[0].to_s
+            
+            puts pic_url = "http://db.auto.sohu.com/model_#{chexi_num}/photo_m#{chexing_num}.shtml"
+            
+            @car = Car.find_or_create_by(:chexing_num => chexing_num, :from_site => @from_site)
+            @car.maker = @maker
+            @car.chexi = chexi
+            @car.chexing = chexing
+            @car.year = year
+            @car.chexi_num = chexi_num
+            @car.chexing_num = chexing_num
+            @car.pic_url = pic_url
+            @car.status = status
+            @car.save
+
+          end
         end
-      end
-#break
-      
+        #break
+      end #end of m_item
       #puts item.at_xpath('h3/a/text()').to_s.strip.split(' ')[0]
-    end
+    end #end of @doc.xpath
   end
 
   def run
@@ -172,9 +235,12 @@ class GetCarAndDetail
       puts url = "http://db.auto.sohu.com/model_#{car.chexi_num}/trim_#{car.chexing_num}.shtml"
 
       @doc = fetch_chexing(url)
+      car.parameters = nil
+      @details = []    
       
       id_strs = []
       id_names = []
+      id_values = []
       puts @doc.at_css("h1").text
       @doc.xpath("//table[@id='trimArglist']/tbody/tr").each do |item|
         id_str = item.at_xpath("@id").to_s
@@ -187,46 +253,44 @@ class GetCarAndDetail
       next if id_strs.length != id_names.length
       puts json_url = "http://db.auto.sohu.com/PARA/TRIMDATA/trim_data_#{car.chexing_num}.json"
       json_html = safe_open(json_url , retries = 3, sleep_time = 0.2, headers = {})
-      json_html = json_html.gsub("'", '"')
+      #json_html.encode!('utf-8', 'gbk', :invalid => :replace)
+      
+      json_html = json_html.gsub("'", '"').gsub('%d7', '*')
+      #puts json_html
+      #break
       s_json = JSON.parse(json_html)
       
       id_strs.each_with_index do |ids, j|
-        puts "#{ids}-"
         code_str = s_json[ids]
         if code_str.nil?
-          puts ""
+          #puts ""
+          id_values << ""
         else
-          puts "#{CGI::unescape(code_str)}"
+          #puts "#{CGI::unescape(code_str)}"
+          r3 = code_str.gsub(/\%u([\da-fA-F]{4})/) {|m| [$1].pack("H*").unpack("n*").pack("U*")}
+          r3 = r3.gsub('\%d', '*')
+          id_values << CGI::unescape(r3)
         end
+      end
+      id_strs.each_with_index do |id, k|
+        puts name = id_names[k]
+        puts value = id_values[k]
+        #value.encode!('utf-8',  :invalid => :replace)
+        
+        
+        para = Parameter.new()
+        para.name = name
+        para.value = value
+        para.num = k
+        para.category = id
+        @details << para
       end
       #搞定。。。明天继续存数据库
-      
-break      
-      car.parameters = nil
-      @details = []
-
-      @doc.xpath('//div[@class = "line_box car_config"]/table/tbody/tr').each_with_index do |item, ii|
-        puts "#{i}/#{@total} - #{ii} "
-        [
-        ["th[1]/text()" , "td[1]"],
-        ["th[2]/text()" , "td[2]"],
-        ].each do |name, value|
-          n = item.at_xpath(name).to_s
-          v = item.at_xpath(value).to_s.strip_tag.strip
-
-          unless n.eql?("")
-            #puts "#{n} \t #{v}"
-            para = Parameter.new()
-            para.name = n
-            para.value = v
-            @details << para
-          end
-        end
-
-      end
       car.parameters = @details
       car.save
-      print "  saved"
+      print " #{url} saved"
+#break      
+
     end
   end
   
@@ -291,7 +355,8 @@ break
         
           if (title == param.name && title != "车身颜色")
             txt_str = param.value
-            txt_str.color_str_to_line
+            txt_str = CGI::unescape(txt_str)
+            #txt_str.color_str_to_line
             str << txt_str
           end
         end
@@ -354,5 +419,5 @@ from_site = "sohu"
 #GetCarAndDetail.new(sid, maker, from_site).save_pic
 #GetCarAndDetail.new(sid, maker, from_site).down_pic(folder)
 GetCarAndDetail.new(sid, maker, from_site).save_config
-#GetCarAndDetail.new(sid, maker, from_site).export_report
+GetCarAndDetail.new(sid, maker, from_site).export_report
 
