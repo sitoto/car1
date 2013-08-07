@@ -36,73 +36,73 @@ class GetCarAndDetail
         puts "That's it#{item.at_xpath('h3/a/text()').to_s}"
         
         item.xpath('div/dl/dd').each_with_index do |object, i|
-          if i < 11   # the top 11 is  shanghaidazong
+            #chexi = object.at_xpath('a/text()').to_s.strip
+            #puts chexi = chexi.split(' ')[0].strip
+            #next
+          if i < 5   # the top 11 is  shanghaidazong
             
             chexi = object.at_xpath('a/text()').to_s.strip
             puts chexi = chexi.split(' ')[0].strip
+            #next
             url = object.at_xpath('a/@href').to_s.strip
             puts chexi_num = url.scan(/\d+/)[0]
             
             #get the chexing's  url 
             puts chexing_url = "http://www.autohome.com.cn/#{chexi_num}/" #http://www.autohome.com.cn/826/
             fetch_chexing(chexing_url)
-
+            #puts @doc_chexing.to_s
             #break
-            if @doc_chexing.xpath("//div[@class='tabwrap']//td[@class='name_d']/a").length == 0
-              all_chexing = @doc_chexing.xpath("//select[@class= 'select-carpic-filter']/option").each do |myobj|
-                puts chexing = myobj.at_xpath('text()').to_s.strip
-                puts year = chexing.split(' ')[0].strip
-                puts chexing = chexing[5..-1].strip
-                puts chexing_num =  myobj.at_xpath('@value').to_s.strip
-                puts pic_url = "http://car.autohome.com.cn/pic/series-s#{chexing_num}/#{chexi_num}.html"
-
-                @car = Car.find_or_create_by(:chexing_num => chexing_num, :from_site => @from_site)
-                
-                @car.maker = @maker
-                @car.chexi = chexi
-                @car.chexing = chexing
-                @car.year = year
-                @car.chexi_num = chexi_num
-                @car.pic_url = pic_url
-                @car.status = 'init'
-
-                @car.save
-              end
-            else
-              all_chexing = @doc_chexing.xpath("//div[@class='tabwrap']//td[@class='name_d']/a")
-              all_chexing.each do |myobj|
-                puts chexing =  myobj.at_xpath('@title').to_s.strip
-                puts year = chexing.split(' ')[0].strip
-                puts chexing = chexing[5..-1].strip
-                puts chexing_num = myobj.at_xpath('@href').to_s.strip.split('/')[1]
-                puts pic_url = "http://car.autohome.com.cn/pic/series-s#{chexing_num}/#{chexi_num}.html"
-
-                @car = Car.find_or_create_by(:chexing_num => chexing_num, :from_site => @from_site)
-                @car.maker = @maker
-                @car.chexi = chexi
-                @car.chexing = chexing
-                @car.year = year
-                @car.chexi_num = chexi_num
-                @car.pic_url = pic_url
-                @car.status = 'init'
-
-                @car.save                
-              end
+            
+            # the new rule of autohome website 
+            # data:2013-8-6
+            # 1.online soon
+            @doc_chexing.xpath("//div[@id='speclist10']/ul/li/div[1]/div/p/a").each do |myobj|
+              puts chexing =  myobj.at_xpath('text()').to_s.strip
+              puts year = chexing.split(' ')[0].strip
+              puts chexing = chexing[5..-1].strip
+              puts chexing_num = myobj.at_xpath('@href').to_s.strip.split('/')[2]
+              puts pic_url = "http://car.autohome.com.cn/pic/series-s#{chexing_num}/#{chexi_num}.html"              
+              #break
+              save_chexing(@maker, chexi, chexing, year, chexi_num, chexing_num, pic_url, @from_site, status = 'init')
             end
-            
-
-            
+            #break
+            # 2.on sale
+            @doc_chexing.xpath("//div[@id='speclist20']/ul/li/div[1]/div/p/a").each do |myobj|
+              puts chexing =  myobj.at_xpath('text()').to_s.strip
+              puts year = chexing.split(' ')[0].strip
+              puts chexing = chexing[5..-1].strip
+              puts chexing_num = myobj.at_xpath('@href').to_s.strip.split('/')[2]
+              puts pic_url = "http://car.autohome.com.cn/pic/series-s#{chexing_num}/#{chexi_num}.html"     
+              #break
+              save_chexing(@maker, chexi, chexing, year, chexi_num, chexing_num, pic_url, @from_site, status = 'init')
+            end    
+            #break
+            # 3.off sale
+            @doc_chexing.xpath("//div[@id='drop2']//a").each do |myobj|
+              puts year = myobj.at_xpath('text()').to_s.strip
+              puts y = myobj.at_xpath('@data').to_s.strip
+              puts s = chexi_num
+              puts my_url = "http://www.autohome.com.cn/ashx/series_allspec.ashx?s=#{s}&y=#{y}"
+              html_stream = open_http(my_url)
+              #from json get chexing
+              s_json = JSON.parse(html_stream)
+              s_json["Spec"].each do |myitem|
+                puts chexing_num = myitem["Id"]
+                puts chexing = myitem["Name"]
+                puts chexing = chexing[5..-1].strip
+                pic_url = "http://car.autohome.com.cn/pic/series-s#{chexing_num}/#{chexi_num}.html"
+                save_chexing(@maker, chexi, chexing, year, chexi_num, chexing_num, pic_url, @from_site, status = 'init')
+              end
+              
+            end
           end
-          
         end
-          
-        
       end
-      
       #puts item.at_xpath('h3/a/text()').to_s.strip.split(' ')[0]
     end
-  end
+  end #end of read_chexi
 
+  
   def run
     
   end
@@ -242,7 +242,8 @@ class GetCarAndDetail
     end  
   
     create_file_to_write('pic_download')
-    @cars = Car.all.asc(:created_at)
+    @cars = Car.where(:maker => @maker, :from_site => @from_site).desc(:created_at)
+    #@cars = Car.all.asc(:created_at)
     puts @cars.length
     @cars.each_with_index do |car , c_i|
       #next if c_i < 255
@@ -270,7 +271,7 @@ class GetCarAndDetail
   
   def export_report
     create_file_to_write('report')
-    @cars = Car.where(:maker => @maker, :from_site => @from_site).desc(:created_at)
+    @cars = Car.where(:maker => @maker, :from_site => @from_site).desc(:chexi_num)
     length = @cars.count
     @title2 = []
 
@@ -297,7 +298,7 @@ class GetCarAndDetail
         
           if (title == param.name && title != "车身颜色")
             txt_str = param.value
-            txt_str = CGI::unescape(txt_str)
+            #txt_str = CGI::unescape(txt_str)
             #txt_str.color_str_to_line
             str << txt_str
           end
@@ -342,17 +343,34 @@ class GetCarAndDetail
 #    end
     @doc_chexing = Nokogiri::HTML(html_stream)
   end
+  def open_http(url)
+    safe_open(url , retries = 3, sleep_time = 0.2, headers = {})
+  end #end of open_http
   
+  def save_chexing(maker, chexi, chexing, year, chexi_num, chexing_num, pic_url, from_site, status = 'init')
+    @car = Car.find_or_create_by(:chexing_num => chexing_num, :from_site => from_site)
+                    
+    @car.maker = maker
+    @car.chexi = chexi
+    @car.chexing = chexing
+    @car.year = year
+    @car.chexi_num = chexi_num
+    @car.pic_url = pic_url
+    @car.status = status
+
+    @car.save  
+  end #end of save_chexing 
   
 end
 
-sid = 'brand_1' #it's h3/a 's  id
-maker = "上海大众"
-folder = "shanghaidazong"
+sid = 'brand_14' #it's h3/a 's  id
+maker = "东风本田"
+folder = "a_dongfengbentian"
+from_site = "autohome"
 
-#GetCarAndDetail.new(sid, maker).read_chexi
-#GetCarAndDetail.new(sid, maker).save_pic
-#GetCarAndDetail.new(sid, maker).down_pic(folder)
-#GetCarAndDetail.new(sid, maker).save_config
-#GetCarAndDetail.new(sid, maker).export_report
+#GetCarAndDetail.new(sid, maker, from_site).read_chexi
+#GetCarAndDetail.new(sid, maker, from_site).save_pic
+#GetCarAndDetail.new(sid, maker, from_site).down_pic(folder)
+GetCarAndDetail.new(sid, maker, from_site).save_config
+GetCarAndDetail.new(sid, maker, from_site).export_report
 
