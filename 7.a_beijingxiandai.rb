@@ -370,12 +370,12 @@ class GetCarAndDetail
   
 end
 
-sid = 'brand-3' #it's h3/a 's  id
-maker = "一汽丰田"
-folder = "a_yiqifengtian"
+sid = 'brand-12' #it's h3/a 's  id
+maker = "北京现代"
+folder = "a_beijingxiandai"
 from_site = "autohome"
 #error  特锐 (停售)
-#GetCarAndDetail.new(sid, maker, from_site).read_chexi
+GetCarAndDetail.new(sid, maker, from_site).read_chexi
 GetCarAndDetail.new(sid, maker, from_site).save_pic
 GetCarAndDetail.new(sid, maker, from_site).down_pic(folder)
 GetCarAndDetail.new(sid, maker, from_site).save_config
