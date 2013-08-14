@@ -51,7 +51,7 @@ class GetCarAndDetail
           
           #break
           # 2.on sale
-          @doc_chexing.xpath("//div[@id='speclist10']/ul/li/div[1]/div/p/a[1]").each do |myobj|
+          @doc_chexing.xpath("//div[@id='speclist20']/ul/li/div[1]/div/p/a[1]").each do |myobj|
             puts chexing =  myobj.at_xpath('text()').to_s.strip
             puts year = chexing.split(' ')[0].strip
             puts chexing = chexing[5..-1].strip
