@@ -56,7 +56,7 @@ class GetCarAndDetail
           @car = Car.find_or_create_by(:chexing_num => chexing_num, :from_site => from_site)
           @car.maker = @maker
           @car.chexi = chexi
-          @car.chexing = chexing[5..-1].strip
+          @car.chexing = chexing.gsub(year, '').gsub(chexi, '')#[5..-1].strip
           @car.year = year
           @car.chexi_num = chexi_num
           @car.chexing_num = chexing_num

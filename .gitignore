@@ -29,3 +29,6 @@ capybara-*.html
 **.orig
 *.txt
 pickle-email-*.html
+/b_*/*
+/a_*/*
+/s_*/*
