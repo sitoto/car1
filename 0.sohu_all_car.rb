@@ -11,11 +11,11 @@ maker = '一汽丰田'
 #url = "http://db.auto.sohu.com/model-list-brand-all.shtml"
 folder = "s_yiqifengtian"
 =end
+items = [["1104","北京现代", "北京现代", "s_beijingxiandai"]]
 
-items = [["1104","北京现代", "北京现代", "s_beijingxiandai"],
-	 ["1103","进口现代", "进口现代", "s_jinkouxiandai"],
-	 ["1071","上海大众斯柯达", "上海大众斯柯达", "s_shanghaidazongsikeda"],
-	 ["1071","进口斯柯达", "进口斯柯达", "s_jinkousikeda"]]
+items = [["1103","进口现代", "进口现代", "s_jinkouxiandai"],
+	 ["1071","上海大众斯柯达", "上海大众斯柯达", "s_shanghaidazongsikeda"]]
+items = [ ["1070","进口斯柯达", "进口斯柯达", "s_jinkousikeda"]]
 
 
 items.each do |sid, webmaker, maker, folder|
