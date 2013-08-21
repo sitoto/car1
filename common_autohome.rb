@@ -15,9 +15,10 @@ Mongoid.load!("config/mongoid.yml")
 class GetCarAndDetail
   include Common
   
-  def initialize(sid = "", maker = "", from_site ="")
+  def initialize(sid = "", webmaker ="" , maker = "", from_site ="")
     @sid = sid
     @maker = maker
+    @webmaker = webmaker
     @from_site = from_site
   end
   
@@ -25,7 +26,7 @@ class GetCarAndDetail
     brand_url = "http://car.autohome.com.cn/price/#{@sid}.html"
     @doc_brand =   fetch_chexing(brand_url)
     @doc_brand.xpath('//div[@class="brand_r"]/ul/li').each do |item|
-      if item.at_xpath('div/a/text()').to_s == @maker
+      if item.at_xpath('div/a/text()').to_s == @webmaker
         item.xpath('div[@class="brand_car"]//a').each_with_index do |object, i|
 
           puts chexi = object.at_xpath('@title').to_s

@@ -10,14 +10,15 @@ folder = "b_yiqifengtian"
 sid = 'guangqifengtian'
 maker = "广汽丰田"
 folder = "b_guangqifengtian"
+
+#items = [["tianjinyiqifengtian", "一汽丰田", "b_yiqifengtian"]]#,
+items =	[["guangqifengtian", "广汽丰田", "b_guangqifengtian"],
+	 ["beijingxiandai", "北京现代", "b_beijingxiandai"],
+	 ["xiandai", "进口现代", "b_jinkouxiandai"],
+	 ["sikeda", "进口斯柯达", "b_jinkoushidkeda"]]
 =end
 
-items = [["tianjinyiqifengtian", "一汽丰田", "b_yiqifengtian"],
-	 ["guangqifengtian", "广汽丰田", "b_guangqifengtian"],
-	 ["beijingxiandai", "北京现代", "b_beijingxiandai"],
-	 ["xiandai", "现代(进口)", "b_jinkouxiandai"],
-	 ["hanghaidazhongsikeda", "上海大众斯柯达", "b_shanghaidazongshikeda"],
-	 ["sikeda", "斯柯达(进口)", "b_jinkoushidkeda"]]
+items =	[["shanghaidazhongsikeda", "上海大众斯柯达", "b_shanghaidazongshikeda"]]
 
 items.each do |sid, maker, folder|
 	puts "#{sid}-#{maker}-#{folder}"
@@ -25,7 +26,8 @@ items.each do |sid, maker, folder|
 
 	GetCarAndDetail.new(sid, maker, from_site).read_chexi
 	GetCarAndDetail.new(sid, maker, from_site).save_pic
-	GetCarAndDetail.new(sid, maker, from_site).down_pic(folder)
 	GetCarAndDetail.new(sid, maker, from_site).save_config
+	GetCarAndDetail.new(sid, maker, from_site).down_pic(folder)
+
 #	GetCarAndDetail.new(sid, maker, from_site).export_report(folder)
 end
