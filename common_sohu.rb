@@ -16,8 +16,9 @@ Mongoid.load!("config/mongoid.yml")
 class GetCarAndDetail
   include Common
   
-  def initialize(sid = "", maker = "", from_site ="")
+  def initialize(sid = "", webmaker = "", maker = "", from_site ="")
     @sid = sid
+    @webmaker = webmaker
     @maker = maker
     @from_site = from_site
   end
@@ -30,7 +31,7 @@ class GetCarAndDetail
     status = 'init'
     @doc.xpath('//div[@class="blk_meta"]/div[@class="meta_con"]').each do |m_item|
       
-      next if m_item.at_xpath("div[@class='brand_name']/a/text()").to_s.strip != @maker.to_s
+      next if m_item.at_xpath("div[@class='brand_name']/a/text()").to_s.strip != @webmaker.to_s
       m_item.xpath('ul/li//a[@class="name"]').each do |item|
 #        next
         puts chexi = item.at_xpath('text()').to_s.strip
