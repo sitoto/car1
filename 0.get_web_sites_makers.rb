@@ -4,6 +4,7 @@ require 'rubygems'
 require 'nokogiri'
 require 'open-uri'
 require 'pp'
+require "chinese_pinyin"
 require_relative "common"
 
 Dir.glob("#{File.dirname(__FILE__)}/app/models/*.rb") do |lib|
@@ -15,7 +16,8 @@ Mongoid.load!("config/mongoid.yml")
 class GemWebMakers
   include Common
   
-  def initialize()
+  def initialize(website)
+  @website = website
   end
 
   def generate(website)
@@ -33,6 +35,11 @@ class GemWebMakers
     end
   end
   
+  def run
+   # generate(@website)
+    export_maker(@website)
+    
+  end
 =begin
 %w(featured rated).each do |name|
  define_method(name) do
@@ -96,9 +103,48 @@ end
     doc = fetch_doc(url)
     puts doc.at_xpath("//title").to_s
     doc.xpath("//div[@class='grade_js_top30']").each do |item|
-      puts brand = item.at_xpath("div/div[@class='grade_js_top33']/a/text()").to_s
-      puts url = item.at_xpath("div/div[@class='grade_js_top33']/a/@href").to_s
+      puts brand_name = item.at_xpath("div/div[@class='grade_js_top33']/a/text()").to_s
+      puts brand_url = item.at_xpath("div/div[@class='grade_js_top33']/a/@href").to_s
+      puts sid = brand_url.scan(/(?<=price\/).*(?=\.html)/)[0]
+      
+      rows = item.xpath("div//div[@class='fcttitle']/a")
+      if 0 == rows.length 
+        maker_name = brand_name
+        webname = brand_name
+        maker_url = ""
+        folder = Pinyin.t(maker_name, '').downcase.to_s 
+        folder = "a_#{folder}"
+        puts folder
+        save_maker(sid, brand_name, maker_name, webname, brand_url, maker_url, folder, 'autohome')
+      end
+      
+      rows.each do |maker|
+        puts webname = maker.at_xpath("text()").to_s.strip
+        puts maker_url = maker.at_xpath("@href").to_s.strip
+        
+        back = webname.scan(/(?<=\().*(?=\))/)[0]
+        maker_name =  "#{back}#{webname}".strip
+        puts maker_name.gsub!(/\(.*?\)/, '')     
+        
+        folder = Pinyin.t(maker_name, '').downcase.to_s 
+        folder = "a_#{folder}"
+        puts folder
+        save_maker(sid, brand_name, maker_name, webname, brand_url, maker_url, folder, 'autohome')        
+        
+      end
+      
     end
+  end
+  
+  def export_maker(from_site = 'autohome')
+    create_file_to_write(from_site)
+    @makers = Maker.where(:from_site => from_site)
+    str = "["
+    @makers.each do |maker|
+      str += "[\"#{maker.sid}\", \"#{maker.webname}\", \"#{maker.maker_name}\", \"#{maker.folder}\"],\n"
+    end
+    str += "]"
+    @file_to_write.puts str
   end
   
   
@@ -121,8 +167,13 @@ end
     safe_open(url , retries = 3, sleep_time = 0.2, headers = {})
   end #end of open_http
   
-  def save_maker(sid, webname, name, folder, brand,  from_site, status = 'init')
-    @maker = Maker.find_or_create_by()
+  def save_maker(sid, brand_name, maker_name, webname, brand_url, maker_url, folder,  from_site)
+    @maker = Maker.find_or_create_by(:brand_name => brand_name, :webname => webname, :from_site => from_site)
+    @maker.sid = sid
+    @maker.maker_name = maker_name
+    @maker.brand_url = brand_url
+    @maker.maker_url = maker_url
+    @maker.folder = folder
           
     @maker.save  
   end #end of save_chexing 
@@ -130,9 +181,11 @@ end
 end
 
 
-GemWebMakers.new().generate("autohome")
-GemWebMakers.new().generate("bitauto")
-GemWebMakers.new().generate("sohu")
-GemWebMakers.new().generate("pcauto")
+GemWebMakers.new("autohome").run
+
+
+#GemWebMakers.new().generate("bitauto")
+#GemWebMakers.new().generate("sohu")
+#GemWebMakers.new().generate("pcauto")
 
 
