@@ -34,11 +34,29 @@ class GemWebMakers
       puts "Oh...! There is nothing to do."
     end
   end
+  def get_autohome_makers_from_cars
+    puts Maker.where(:from_site => 'autohome').length
+    return 
+#   Car.where(:from_site => 'autohome').only(:maker).each do |u|
+    Car.where(:from_site => 'autohome').distinct(:maker).each do |u|
+      puts u  
+      Maker.where(:from_site => 'autohome').each do |maker|
+        if u == maker.maker_name 
+	  puts maker.webname 
+          maker.update_attribute(:status, 4)
+        end
+      end
+    end
+    Maker.where(:status => 1).each do |m|
+      puts "#{m.status}-#{m.webname}"
+    end
+  end
   
   def run
-    generate(@website)
-    export_maker(@website)
-    
+    #generate(@website)
+    #export_maker(@website)
+    get_autohome_makers_from_cars
+
   end
 =begin
 %w(featured rated).each do |name|

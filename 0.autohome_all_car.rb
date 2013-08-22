@@ -18,17 +18,30 @@ items = [ ["brand-12","现代(进口)", "进口现代", "a_jinkouxiandai"],
 =end
 items = [["brand-3", "一汽丰田", "一汽丰田", "a_yiqifengtian"],
 	 ["brand-3", "广汽丰田", "广汽丰田", "a_guangqifengtian"]]
+# status 
+# 0 : nothing
+# 1 : get chexi
+# 2 : get pictures url
+# 3 : get config
+# 4 : download pictures
+# 5 : other
 
+Maker.where(:from_site => 'autohome', :status => 0).each do |m|
 
-items.each do |sid, webmaker, maker, folder|
+	sid = m.sid 
+	webmaker = m.webname
+	maker = m.maker_name
+	folder = m.folder
 	puts "#{sid}-#{maker}-#{folder}"
 	from_site = "autohome"
 
-#	GetCarAndDetail.new(sid, webmaker, maker, from_site).read_chexi
-#	GetCarAndDetail.new(sid, webmaker, maker, from_site).save_pic
-#	GetCarAndDetail.new(sid, webmaker, maker, from_site).save_config
-	GetCarAndDetail.new(sid, webmaker, maker, from_site).down_pic(folder)
-	#GetCarAndDetail.new(sid, webmaker, maker, from_site).export_report(folder)
+	GetCarAndDetail.new(sid, webmaker, maker, from_site).read_chexi
+	GetCarAndDetail.new(sid, webmaker, maker, from_site).save_pic
+	GetCarAndDetail.new(sid, webmaker, maker, from_site).save_config
+	m.update_attribute(:status, 3)
+
+#	GetCarAndDetail.new(sid, webmaker, maker, from_site).down_pic(folder)
+#	GetCarAndDetail.new(sid, webmaker, maker, from_site).export_report(folder)
 
 	#GetCarAndDetail.new(sid, webmaker, maker, from_site).remove_maker
 	#GetCarAndDetail.new(sid, webmaker, maker, from_site).export_report_test(folder)
