@@ -46,8 +46,11 @@ class GetCarAndDetail
 
         @doc_chexing.xpath('//table[@id = "compare"]/tr/td[1]/a').each do |chexing_link|
           chexing = chexing_link.to_s.strip_tag
+	  new_chexing = chexing.gsub(year, '').gsub(chexi, '').gsub(" ", '').strip
           chexing_url = chexing_link.at_xpath('@href').to_s.strip
-          puts "#{i}-#{@maker}-#{chexi}-#{year}-#{chexing}\t#{chexing_url}"
+	  new_chexi = chexi.gsub(@maker.to_s, '').strip
+
+          puts "#{i}-#{@maker}-#{new_chexi}-#{year}-#{new_chexing}\t#{chexing_url}"
           puts pic_url = chexing_link.at_xpath('@href').to_s + "tupian/"
           puts chexing_num = chexing_url.split('/')[-1]
           status = 'init'
@@ -55,8 +58,8 @@ class GetCarAndDetail
           
           @car = Car.find_or_create_by(:chexing_num => chexing_num, :from_site => from_site)
           @car.maker = @maker
-          @car.chexi = chexi
-          @car.chexing = chexing[5..-1].strip
+          @car.chexi = new_chexi
+          @car.chexing = new_chexing #[1..-1].strip
           @car.year = year
           @car.chexi_num = chexi_num
           @car.chexing_num = chexing_num
@@ -177,7 +180,7 @@ class GetCarAndDetail
     @cars = Car.where(:maker => @maker, :from_site => @from_site)
     puts @cars.length
     @cars.each_with_index do |car , c_i|
-      #next if c_i < 255
+      #next if c_i < 303
       car.pics.each_with_index do |item, p_i|
         #next if p_i < 1 && c_i < 1
         puts "#{c_i} -#{p_i}"

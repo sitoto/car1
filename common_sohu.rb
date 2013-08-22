@@ -5,6 +5,7 @@ require 'nokogiri'
 require 'open-uri'
 require 'pp'
 require "cgi"
+require "erb"
 require_relative "common"
 
 Dir.glob("#{File.dirname(__FILE__)}/app/models/*.rb") do |lib|
@@ -16,8 +17,9 @@ Mongoid.load!("config/mongoid.yml")
 class GetCarAndDetail
   include Common
   
-  def initialize(sid = "", maker = "", from_site ="")
+  def initialize(sid = "", webmaker = "", maker = "", from_site ="")
     @sid = sid
+    @webmaker = webmaker
     @maker = maker
     @from_site = from_site
   end
@@ -30,7 +32,9 @@ class GetCarAndDetail
     status = 'init'
     @doc.xpath('//div[@class="blk_meta"]/div[@class="meta_con"]').each do |m_item|
       
-      next if m_item.at_xpath("div[@class='brand_name']/a/text()").to_s.strip != @maker.to_s
+#      next if m_item.at_xpath("div[@class='brand_name']/a/text()").to_s.strip != @webmaker.to_s
+      next if m_item.at_xpath("div[@class='brand_name']//text()").to_s.strip != @webmaker.to_s
+
       m_item.xpath('ul/li//a[@class="name"]').each do |item|
 #        next
         puts chexi = item.at_xpath('text()').to_s.strip
@@ -231,7 +235,7 @@ class GetCarAndDetail
     puts length = @cars.count
     @cars.each_with_index do |car , i|
       puts "#{i}/#{length}"
-      #next if i < 
+      next if i < 194 
       puts url = "http://db.auto.sohu.com/model_#{car.chexi_num}/trim_#{car.chexing_num}.shtml"
 
       @doc = fetch_chexing(url)
@@ -269,10 +273,12 @@ class GetCarAndDetail
           #puts ""
           id_values << ""
         else
-          #puts "#{CGI::unescape(code_str)}"
+          #puts code_str
+	  code_str.encode!('utf-8', 'gbk', :invalid => :replace) #忽略无法识别的字符
           r3 = code_str.gsub(/\%u([\da-fA-F]{4})/) {|m| [$1].pack("H*").unpack("n*").pack("U*")}
           r3 = r3.gsub('\%d', '*')
           id_values << CGI::unescape(r3)
+	  #ERB::Util.url_encode
         end
       end
       id_strs.each_with_index do |id, k|
