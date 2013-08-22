@@ -36,7 +36,7 @@ class GemWebMakers
   end
   
   def run
-   # generate(@website)
+    generate(@website)
     export_maker(@website)
     
   end
@@ -112,7 +112,7 @@ end
         maker_name = brand_name
         webname = brand_name
         maker_url = ""
-        folder = Pinyin.t(maker_name, '').downcase.to_s 
+        folder = Pinyin.t(maker_name, splitter: '').downcase.to_s 
         folder = "a_#{folder}"
         puts folder
         save_maker(sid, brand_name, maker_name, webname, brand_url, maker_url, folder, 'autohome')
@@ -125,8 +125,9 @@ end
         back = webname.scan(/(?<=\().*(?=\))/)[0]
         maker_name =  "#{back}#{webname}".strip
         puts maker_name.gsub!(/\(.*?\)/, '')     
-        
-        folder = Pinyin.t(maker_name, '').downcase.to_s 
+
+        folder = Pinyin.t(maker_name, splitter: '').downcase.to_s 
+       
         folder = "a_#{folder}"
         puts folder
         save_maker(sid, brand_name, maker_name, webname, brand_url, maker_url, folder, 'autohome')        

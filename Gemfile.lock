@@ -8,6 +8,7 @@ GEM
       i18n (~> 0.6)
       multi_json (~> 1.0)
     builder (3.0.0)
+    chinese_pinyin (0.5.0)
     i18n (0.6.0)
     mongoid (3.0.0.rc)
       activemodel (~> 3.1)
@@ -26,5 +27,6 @@ PLATFORMS
   x86-mingw32
 
 DEPENDENCIES
+  chinese_pinyin
   mongoid (~> 3.0.0.rc)
   nokogiri
