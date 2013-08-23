@@ -44,7 +44,7 @@ class GetCarAndDetail
             puts chexing =  myobj.at_xpath('text()').to_s.strip
             puts year = chexing.split(' ')[0].strip
             puts chexing = chexing[5..-1].strip
-            puts chexing_num = myobj.at_xpath('@href').to_s.strip.split('/')[2]
+            puts chexing_num = myobj.at_xpath('@href').to_s.strip.split('/')[2].to_s
             puts pic_url = "http://car.autohome.com.cn/pic/series-s#{chexing_num}/#{chexi_num}.html"              
             #break
             save_chexing(@maker, chexi, chexing, year, chexi_num, chexing_num, pic_url, @from_site, status = 'init')
@@ -153,12 +153,12 @@ class GetCarAndDetail
       print "#{i}/#{length} "
       puts url = "http://www.autohome.com.cn/spec/#{car.chexing_num}/config.html"
       @file_to_write.puts "#{i}-#{url}"
-      html_stream = open(url).read.strip
+      html_stream = open_http(url).strip
       html_stream.encode!('utf-8', 'gbk', :invalid => :replace)
       @doc = Nokogiri::HTML(html_stream)
       #@file_to_write.puts @doc.to_s
       #break
-      if @doc.css('script').length == 6
+      if @doc.css('script').length < 7 
         
         puts "error"
         @file_to_write.puts "error-#{i}-#{url}"
@@ -352,7 +352,7 @@ class GetCarAndDetail
   
   def fetch_chexing(detail_url)
     @doc_chexing = nil
-    html_stream = safe_open(detail_url , retries = 3, sleep_time = 0.2, headers = {})
+    html_stream = safe_open(detail_url , retries = 5, sleep_time = 0.32, headers = {})
 #    begin
     html_stream.encode!('utf-8', 'gbk', :invalid => :replace) #忽略无法识别的字符
 #    rescue StandardError,Timeout::Error, SystemCallError, Errno::ECONNREFUSED #有些异常不是标准异常  
@@ -362,17 +362,17 @@ class GetCarAndDetail
   end
 
   def open_http(url)
-    safe_open(url , retries = 3, sleep_time = 0.2, headers = {})
+    safe_open(url , retries = 5, sleep_time = 0.43, headers = {})
   end #end of open_http
   
   def save_chexing(maker, chexi, chexing, year, chexi_num, chexing_num, pic_url, from_site, status = 'init')
-    @car = Car.find_or_create_by(:chexing_num => chexing_num, :from_site => from_site)
+    @car = Car.find_or_create_by(:chexing_num => chexing_num.to_s, :from_site => from_site)
                     
     @car.maker = maker
     @car.chexi = chexi
     @car.chexing = chexing
     @car.year = year
-    @car.chexi_num = chexi_num
+    @car.chexi_num = chexi_num.to_s
     @car.pic_url = pic_url
     @car.status = status
 

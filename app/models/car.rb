@@ -7,9 +7,11 @@ class Car
   field :chexing, type: String
   field :year,    type: String
   
-  field :chexi_num    #import , http://www.autohome.com.cn/826/ 826 = chexi_num ;  => get the model
+  field :chexi_num ,    type: String
+   #import , http://www.autohome.com.cn/826/ 826 = chexi_num ;  => get the model
   
-  field :chexing_num  #import , http://www.autohome.com.cn/spec/1969/  1969 = chexing_num
+  field :chexing_num ,    type: String
+  #import , http://www.autohome.com.cn/spec/1969/  1969 = chexing_num
                       #import , http://www.autohome.com.cn/spec/1969/config.html      ≈‰÷√“≥√Ê
   
                       
