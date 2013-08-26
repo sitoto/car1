@@ -53,10 +53,10 @@ class GemWebMakers
   end
   
   def run
-    #generate(@website)
+    generate(@website)
     #export_maker(@website)
     #get_autohome_makers_from_cars
-    export_maker_txt('autohome')
+    #export_maker_txt('autohome')
 
   end
 =begin
@@ -125,34 +125,20 @@ end
       puts brand_name = item.at_xpath("div/div[@class='grade_js_top33']/a/text()").to_s
       puts brand_url = item.at_xpath("div/div[@class='grade_js_top33']/a/@href").to_s
       puts sid = brand_url.scan(/(?<=price\/).*(?=\.html)/)[0]
-      
-      rows = item.xpath("div//div[@class='fcttitle']/a")
-      if 0 == rows.length 
-        maker_name = brand_name
-        webname = brand_name
-        maker_url = ""
-        folder = Pinyin.t(maker_name, splitter: '').downcase.to_s 
-        folder = "a_#{folder}"
-        puts folder
-        save_maker(sid, brand_name, maker_name, webname, brand_url, maker_url, folder, 'autohome')
-      end
-      
-      rows.each do |maker|
-        puts webname = maker.at_xpath("text()").to_s.strip
-        puts maker_url = maker.at_xpath("@href").to_s.strip
-        
+      maker_doc = fetch_doc(brand_url)
+      maker_doc.xpath('//div[@class="brand_name"]/a').each do |maker|
+        webname = maker.at_xpath("text()").to_s.strip
+        maker_url = maker.at_xpath("@href").to_s.strip
         back = webname.scan(/(?<=\().*(?=\))/)[0]
         maker_name =  "#{back}#{webname}".strip
-        puts maker_name.gsub!(/\(.*?\)/, '')     
+        maker_name.gsub!(/\(.*?\)/, '')     
 
         folder = Pinyin.t(maker_name, splitter: '').downcase.to_s 
-       
+
         folder = "a_#{folder}"
         puts folder
         save_maker(sid, brand_name, maker_name, webname, brand_url, maker_url, folder, 'autohome')        
-        
       end
-      
     end
   end
   
@@ -199,16 +185,22 @@ end
   end #end of open_http
   
   def save_maker(sid, brand_name, maker_name, webname, brand_url, maker_url, folder,  from_site)
-    @maker = Maker.find_or_create_by(:brand_name => brand_name, :webname => webname, :from_site => from_site)
-    @maker.sid = sid
-    @maker.maker_name = maker_name
-    @maker.brand_url = brand_url
-    @maker.maker_url = maker_url
-    @maker.folder = folder
-          
-    @maker.save  
-  end #end of save_chexing 
   
+    len = Maker.where(:brand_name => brand_name, :webname => webname, :from_site => from_site).length
+    
+    if len == 0
+      puts "#{brand_name}-#{webname}-#{maker_name}"
+      @maker = Maker.find_or_create_by(:brand_name => brand_name, :webname => webname, :from_site => from_site)
+      
+      @maker.sid = sid
+      @maker.maker_name = maker_name
+      @maker.brand_url = brand_url
+      @maker.maker_url = maker_url
+      @maker.folder = folder
+      @maker.status = 0
+      @maker.save  
+    end #end of save_chexing 
+  end
 end
 
 

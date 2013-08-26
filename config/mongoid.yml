@@ -12,6 +12,13 @@ local:
       database: automotive
       hosts:
         - 127.0.0.1:27017
+test:
+  sessions:
+    default:
+      identity_map_enabled: true
+      database: test
+      hosts:
+        - 127.0.0.1:27017
 dataserver:
   sessions:
     default:
