@@ -52,7 +52,7 @@ class GetCarAndDetail
 
           puts "#{i}-#{@maker}-#{new_chexi}-#{year}-#{new_chexing}\t#{chexing_url}"
           puts pic_url = chexing_link.at_xpath('@href').to_s + "tupian/"
-          puts chexing_num = chexing_url.split('/')[-1]
+          puts chexing_num = chexing_url.split('/')[-1].to_s
           status = 'init'
           from_site = 'bitauto'
           

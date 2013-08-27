@@ -27,6 +27,7 @@ class GemWebMakers
       get_autohome_maker
     when website == 'bitauto'
       puts 'bitauto'
+      get_bitauto_maker
     when website == 'sohu'
       puts 'sohu'
 
@@ -53,10 +54,10 @@ class GemWebMakers
   end
   
   def run
-    #generate(@website)
+    generate(@website)
     #export_maker(@website)
     #get_autohome_makers_from_cars
-    export_maker_txt('autohome')
+    #export_maker_txt('autohome')
 
   end
 =begin
@@ -125,36 +126,51 @@ end
       puts brand_name = item.at_xpath("div/div[@class='grade_js_top33']/a/text()").to_s
       puts brand_url = item.at_xpath("div/div[@class='grade_js_top33']/a/@href").to_s
       puts sid = brand_url.scan(/(?<=price\/).*(?=\.html)/)[0]
-      
-      rows = item.xpath("div//div[@class='fcttitle']/a")
-      if 0 == rows.length 
-        maker_name = brand_name
-        webname = brand_name
-        maker_url = ""
-        folder = Pinyin.t(maker_name, splitter: '').downcase.to_s 
-        folder = "a_#{folder}"
-        puts folder
-        save_maker(sid, brand_name, maker_name, webname, brand_url, maker_url, folder, 'autohome')
-      end
-      
-      rows.each do |maker|
-        puts webname = maker.at_xpath("text()").to_s.strip
-        puts maker_url = maker.at_xpath("@href").to_s.strip
-        
+      maker_doc = fetch_doc(brand_url)
+      maker_doc.xpath('//div[@class="brand_name"]/a').each do |maker|
+        webname = maker.at_xpath("text()").to_s.strip
+        maker_url = maker.at_xpath("@href").to_s.strip
         back = webname.scan(/(?<=\().*(?=\))/)[0]
         maker_name =  "#{back}#{webname}".strip
-        puts maker_name.gsub!(/\(.*?\)/, '')     
+        maker_name.gsub!(/\(.*?\)/, '')     
 
         folder = Pinyin.t(maker_name, splitter: '').downcase.to_s 
-       
+
         folder = "a_#{folder}"
         puts folder
-        save_maker(sid, brand_name, maker_name, webname, brand_url, maker_url, folder, 'autohome')        
-        
+        save_maker(sid, brand_name, maker_name, webname, brand_url, maker_url, folder, @website)        
       end
-      
     end
   end
+  
+  def get_bitauto_maker
+    # open the url
+    url = "http://car.bitauto.com/brandlist.html"
+    # get it sid, brand-** ,maker , brand
+    doc = fetch_doc(url)
+    puts doc.at_xpath("//title").to_s    
+    doc.xpath("//dl[@class='bybrand_list']/dd[@class='b']").each do |brand|
+      puts brand_name = brand.at_xpath('div/a/text()').to_s.strip
+      brand_url = brand.at_xpath('div/a/@href').to_s.strip
+      puts brand_url = "http://car.bitauto.com#{brand_url}"
+      #/div[@class='brand_name']/a
+      
+      brand.xpath('following-sibling::dd/h2/a').each do |maker|
+        puts maker_name = maker.at_xpath('text()').to_s.strip
+        maker_num = maker.at_xpath('@href').to_s.strip
+        puts maker_url = "http://car.bitauto.com#{maker_num}"
+        puts sid = maker_num.gsub('/', '').to_s
+        
+        folder = Pinyin.t(maker_name, splitter: '').downcase.to_s 
+        folder = "b_#{folder}"
+        webname = maker_name
+        
+        save_maker(sid, brand_name, maker_name, webname, brand_url, maker_url, folder, @website)
+      end
+    end
+    
+  end
+  
   
   def export_maker(from_site = 'autohome')
     create_file_to_write(from_site)
@@ -187,7 +203,7 @@ end
   def fetch_doc(url)
     html_stream = safe_open(url , retries = 3, sleep_time = 0.2, headers = {})
 #    begin
-    html_stream.encode!('utf-8', 'gbk', :invalid => :replace) #忽略无法识别的字符
+#    html_stream.encode!('utf-8', 'gbk', :invalid => :replace) #忽略无法识别的字符
 #    rescue StandardError,Timeout::Error, SystemCallError, Errno::ECONNREFUSED #有些异常不是标准异常  
 #     puts $!  
 #    end
@@ -199,20 +215,27 @@ end
   end #end of open_http
   
   def save_maker(sid, brand_name, maker_name, webname, brand_url, maker_url, folder,  from_site)
-    @maker = Maker.find_or_create_by(:brand_name => brand_name, :webname => webname, :from_site => from_site)
-    @maker.sid = sid
-    @maker.maker_name = maker_name
-    @maker.brand_url = brand_url
-    @maker.maker_url = maker_url
-    @maker.folder = folder
-          
-    @maker.save  
-  end #end of save_chexing 
   
+    len = Maker.where(:brand_name => brand_name, :webname => webname, :from_site => from_site).length
+    
+    if len == 0
+      puts "#{brand_name}-#{webname}-#{maker_name}"
+      @maker = Maker.find_or_create_by(:brand_name => brand_name, :webname => webname, :from_site => from_site)
+      
+      @maker.sid = sid
+      @maker.maker_name = maker_name
+      @maker.brand_url = brand_url
+      @maker.maker_url = maker_url
+      @maker.folder = folder
+      @maker.status = 0
+      @maker.save  
+    end #end of save_chexing 
+  end
 end
 
 
-GemWebMakers.new("autohome").run
+
+GemWebMakers.new("bitauto").run
 
 
 #GemWebMakers.new().generate("bitauto")
