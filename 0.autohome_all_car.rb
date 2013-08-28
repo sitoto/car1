@@ -26,7 +26,7 @@ items = [["brand-3", "一汽丰田", "一汽丰田", "a_yiqifengtian"],
 # 4 : download pictures
 # 5 : other
 
-Maker.where(:from_site => 'autohome', :status => 3).each do |m|
+Maker.where(:from_site => 'autohome', :status => 0).each do |m|
 
 	sid = m.sid 
 	webmaker = m.webname
