@@ -10,7 +10,9 @@ class Maker
   field :brand_url, :type => String
   field :maker_name, :type => String
   field :maker_url, :type => String
-  
+  field :desc, :type => String
   field :status
-
+  
+  field :from_site, :type => String
+  has_many :models
 end
