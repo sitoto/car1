@@ -5,7 +5,6 @@ require 'nokogiri'
 require 'open-uri'
 require 'pp'
 require "cgi"
-require "erb"
 require_relative "common"
 
 Dir.glob("#{File.dirname(__FILE__)}/app/models/*.rb") do |lib|
@@ -278,7 +277,6 @@ class GetCarAndDetail
           r3 = code_str.gsub(/\%u([\da-fA-F]{4})/) {|m| [$1].pack("H*").unpack("n*").pack("U*")}
           r3 = r3.gsub('\%d', '*')
           id_values << CGI::unescape(r3)
-	  #ERB::Util.url_encode
         end
       end
       id_strs.each_with_index do |id, k|
@@ -320,12 +318,13 @@ class GetCarAndDetail
         puts "#{c_i} -#{p_i}"
         @file_to_write.puts "#{c_i} -#{p_i}"
         houzui = item.url.strip.from(-4)
-        puts filename = item.name + houzui
+        puts filename = "#{item.name.strip}#{houzui.strip}"
         filename.gsub!("/", "_")
         filename.gsub!("\\", "_")
         filename.gsub!("*", "_")
         filename.gsub!('"', "_")
         puts item.url
+
         
         download_images(pre_folder, filename, item.url)
         #break
@@ -394,19 +393,34 @@ class GetCarAndDetail
 #    end
     @doc_chexing = Nokogiri::HTML(html_stream)
   end  
-  
   def download_images(pre_folder, filename, url)
-    begin
+	sleep_time = 0.34
+        retries = 4
       File.open("./#{pre_folder}/#{filename}", "wb") do |saved_file|
-        open(url, 'rb') do |read_file|
-        saved_file.write(read_file.read)
+	begin
+          open(url) do |read_file|
+            saved_file.write(read_file.read)
+          end
+        rescue StandardError,Timeout::Error, SystemCallError, Errno::ECONNREFUSED 
+          puts $!  
+          retries -= 1  
+          if retries > 0  
+            url = url.gsub('f', '800')
+            sleep sleep_time and retry  
+          else  
+ 	  #logger.error($!)
+	  #错误日志
+          #TODO Logging..  
+          end  
+        end
+      end
+=begin
+      File.open("./#{pre_folder}/#{filename}", "wb") do |saved_file|
+        open(url)  do |read_file|
+          saved_file.write(read_file.read)
         end
       end  
-    rescue OpenURI::HTTPError, StandardError,Timeout::Error, SystemCallError, Errno::ECONNREFUSED
-      puts $! 
-      @file_to_write.puts $! 
-    end
-    
+=end    
   end
   
   def fetch_img(detail_url)

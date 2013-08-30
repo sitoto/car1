@@ -59,7 +59,7 @@ class GemWebMakers
   
   def run
 
-    #generate(@website)    
+    generate(@website)    
     #export_maker_txt(from_site = @website)
     update_maker
     #export_chexing(@website)
