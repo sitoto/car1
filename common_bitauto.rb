@@ -192,7 +192,7 @@ class GetCarAndDetail
         filename.gsub!("*", "_")
         filename.gsub!('"', "_")
         File.open("./#{pre_folder}/#{filename}", "wb") do |saved_file|
-          open(item.url, 'rb') do |read_file|
+        safe_open_img(url = item.url) do |read_file|
           saved_file.write(read_file.read)
           end
         end

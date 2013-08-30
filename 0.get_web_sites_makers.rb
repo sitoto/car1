@@ -332,6 +332,7 @@ end
 #   Car.where(:from_site => 'autohome').only(:maker).each do |u|
     Car.where(from_site: @website).distinct(:maker).each do |u|
       puts u  
+      #next
       Maker.where(from_site: @website).each do |maker|
         if u == maker.maker_name 
           puts maker.webname 
