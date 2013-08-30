@@ -33,6 +33,7 @@ class GemWebMakers
       get_car388_maker
     when website == 'sohu'
       puts 'sohu'
+      get_sohu_maker
 
     else
       puts "Oh...! There is nothing to do."
@@ -58,7 +59,7 @@ class GemWebMakers
   
   def run
 
-    generate(@website)    
+    #generate(@website)    
     #export_maker_txt(from_site = @website)
     update_maker
     #export_chexing(@website)
@@ -124,6 +125,41 @@ end
    
   
   private  
+  def get_sohu_maker
+    Maker.where(from_site: @website).delete_all
+    url = "http://db.auto.sohu.com/model-list-brand-all.shtml"
+    doc = fetch_doc(url)
+    status = 'init'
+    doc.xpath('//div[@class="category_main"]/div[@class="blk_meta"]').each do |m_item|
+      puts brand_name = m_item.at_xpath("div[@class='meta_left']/a/p/text()").to_s
+      brand_url = m_item.at_xpath("div[@class='meta_left']/a/@href").to_s
+      puts brand_url = "http://db.auto.sohu.com#{brand_url}"
+      m_item.xpath("div[@class='meta_con']/div[@class='brand_name']").each do |maker|
+        maker_name = maker.at_xpath('text()').to_s.strip
+        sid = ''
+        
+        if maker_name.blank?
+          maker_name = maker.at_xpath('a/text()').to_s.strip 
+          maker_url = maker.at_xpath('a/@href').to_s.strip 
+          sid = maker_url.split('_')[1].gsub('/', '').to_s
+        end
+        puts maker_url = "http://db.auto.sohu.com#{maker_url}"
+        
+        puts ">>#{maker_name}"
+        folder = Pinyin.t(maker_name, splitter: '').downcase.to_s 
+        puts folder = "s_#{folder}"
+        webname = maker_name
+        puts sid
+        
+        
+        
+        save_maker(sid, brand_name, maker_name, webname, brand_url, maker_url, folder, @website)
+      end
+      #next if m_item.at_xpath("div[@class='brand_name']/a/text()").to_s.strip != @webmaker.to_s
+      #next if m_item.at_xpath("div[@class='brand_name']//text()").to_s.strip != @webmaker.to_s
+    end
+  end # end of sohu
+  
   def get_car388_maker
   
     Model.where(:from_site => @website).delete_all
@@ -260,7 +296,7 @@ end
   def fetch_doc(url)
     html_stream = safe_open(url , retries = 3, sleep_time = 0.2, headers = {})
 #    begin
-#    html_stream.encode!('utf-8', 'gbk', :invalid => :replace) #忽略无法识别的字符
+    html_stream.encode!('utf-8', 'gbk', :invalid => :replace) #忽略无法识别的字符
 #    rescue StandardError,Timeout::Error, SystemCallError, Errno::ECONNREFUSED #有些异常不是标准异常  
 #     puts $!  
 #    end
@@ -311,7 +347,8 @@ end
 
 
 
-GemWebMakers.new("bitauto").run
+GemWebMakers.new("sohu").run
+#GemWebMakers.new("bitauto").run
 #GemWebMakers.new("car388").run
 
 
