@@ -116,7 +116,8 @@ class GetCarAndDetail
     
     
     @title = @title1 + @title2
-    @file_to_write.puts @title.join('$')
+    #@file_to_write.puts @title.join('$')
+    @file_to_write.puts @title.join("\t")
 
     @cars.all.each_with_index do |car, i|
       print "#{i} "
@@ -126,6 +127,7 @@ class GetCarAndDetail
         
           if (title == param.name)# && title != "车身颜色")
             txt_str = param.value.gsub(%r[<[^>]*>], '').gsub(/\t|\n|\r/, ' ')
+            txt_str = txt_str.gsub(/             .*?(     |$)/, '')
             #txt_str = CGI::unescape(txt_str)
             #txt_str.color_str_to_line
             str << txt_str
@@ -140,7 +142,16 @@ class GetCarAndDetail
     end    
   
   end
-   
+
+  def export_maker_txt(from_site)
+    create_file_to_write(from_site)
+    @makers = Maker.all
+    
+    @makers.each do |maker|
+      @file_to_write.puts "#{maker.sid}\t#{maker.brand_name}\t#{maker.webname}\t#{maker.maker_name}\t#{maker.from_site}"
+    end
+  end
+  
   def delete_repeat
     i = 0
     chexing_nums = Car.where(:from_site => @from_site).distinct(:chexing_num)
@@ -162,15 +173,18 @@ class GetCarAndDetail
     @file_to_write = IoFactory.init(file_path)
   end #create_file_to_write
 end
-maker = "北京现代"
+maker = "进口雪佛兰"
+#maker = "一汽-大众"
 
 
 
 
 
-#GetCarAndDetail.new(maker, "bitauto").export_report("bitauto")
-GetCarAndDetail.new(maker, "sohu").export_report("sohu")
+GetCarAndDetail.new(maker, "bitauto").export_report("bitauto")
+#GetCarAndDetail.new(maker, "sohu").export_report("sohu")
 #GetCarAndDetail.new(maker, "autohome").export_report("autohome")
+#GetCarAndDetail.new(maker, "autohome").export_maker_txt("autohome")
+
 #GetCarAndDetail.new().export_report
 #GetCarAndDetail.new(maker, "bitauto").export_report("bitauto")
 #GetCarAndDetail.new(maker, "sohu").export_report("sohu")
