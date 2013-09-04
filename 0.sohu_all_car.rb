@@ -23,8 +23,14 @@ items = [ ["1078","广汽丰田", "广汽丰田", "s_guangqifengtian"]]
 # 3 : get config
 # 4 : download pictures
 # 5 : other
-
-Maker.where(:from_site => 'sohu', :status => 3).each do |m|
+# puts Car.where(:from_site => 'sohu').length
+# return
+# Car.where(:from_site => 'sohu', :parameters => nil).each do |m|
+# print "#{m.id} "
+# end
+# return
+# Maker.where(:from_site => 'sohu', :maker_name => "一汽-大众").each do |m|
+Maker.where(:from_site => 'sohu').each do |m|
 
 	sid = m.sid 
 	webmaker = m.webname
@@ -33,17 +39,17 @@ Maker.where(:from_site => 'sohu', :status => 3).each do |m|
 	puts "#{sid}-#{maker}-#{folder}"
 	from_site = "sohu"
 
-	GetCarAndDetail.new(sid, webmaker, maker, from_site).read_chexi if m.status < 1
-	m.update_attribute(:status, 1) if m.status < 1
+#	GetCarAndDetail.new(sid, webmaker, maker, from_site).read_chexi if m.status < 1
+#	m.update_attribute(:status, 1) if m.status < 1
 
-	GetCarAndDetail.new(sid, webmaker, maker, from_site).save_pic if m.status < 2
-	m.update_attribute(:status, 2) if m.status < 2
+#	GetCarAndDetail.new(sid, webmaker, maker, from_site).save_pic if m.status < 2
+#	m.update_attribute(:status, 2) if m.status < 2
 
-	GetCarAndDetail.new(sid, webmaker, maker, from_site).save_config if m.status < 3
-	m.update_attribute(:status, 3) if m.status < 3
+#	GetCarAndDetail.new(sid, webmaker, maker, from_site).save_config  # if m.status < 3
+#	m.update_attribute(:status, 3) if m.status < 3
 
-	GetCarAndDetail.new(sid, webmaker, maker, from_site).down_pic(folder) if m.status < 4
-	m.update_attribute(:status, 4) if m.status < 4
+	GetCarAndDetail.new(sid, webmaker, maker, from_site).down_pic(folder)# if m.status < 4
+#	m.update_attribute(:status, 4) if m.status < 4
 
 #	GetCarAndDetail.new(sid, webmaker, maker, from_site).export_report(folder)
 	#GetCarAndDetail.new(sid, webmaker, maker, from_site).remove_maker
