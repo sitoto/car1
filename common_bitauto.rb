@@ -191,11 +191,20 @@ class GetCarAndDetail
         filename.gsub!("\\", "_")
         filename.gsub!("*", "_")
         filename.gsub!('"', "_")
-        File.open("./#{pre_folder}/#{filename}", "wb") do |saved_file|
-        safe_open_img(url = item.url) do |read_file|
-          saved_file.write(read_file.read)
-          end
-        end
+
+        if File.exist?("./#{pre_folder}/#{filename}") 
+	  puts "exist!"
+	else
+          download_images(pre_folder, filename, item.url)
+	end
+ 
+
+#        File.open("./#{pre_folder}/#{filename}", "wb") do |saved_file|
+#        safe_open_img(url = item.url) do |read_file|
+#          saved_file.write(read_file.read)
+#          end
+#        end
+
         #break
       end
       #break
@@ -250,6 +259,30 @@ class GetCarAndDetail
     file_path = File.join('.', "#{name}-#{Time.now.to_formatted_s(:number) }.txt")
     @file_to_write = IoFactory.init(file_path)
   end #create_file_to_write
+
+  def download_images(pre_folder, filename, url)
+    retries = 2
+    sleep_time = 0.22
+    begin
+      File.open("./#{pre_folder}/#{filename}", "wb") do |saved_file|
+        open(url, 'rb') do |read_file|
+        saved_file.write(read_file.read)
+        end
+      end  
+    rescue OpenURI::HTTPError, StandardError,Timeout::Error, SystemCallError, Errno::ECONNREFUSED
+      puts $! 
+      @file_to_write.puts $! 
+      retries -= 1  
+      if retries > 0  
+        sleep sleep_time and retry  
+      else  
+        #logger.error($!)
+        #错误日志
+        #TODO Logging..  
+      end  
+   end
+    
+  end  #end of download_images
   
   def fetch_chexing(detail_url)
     @doc_chexing = nil

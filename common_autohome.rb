@@ -141,8 +141,8 @@ class GetCarAndDetail
   def save_config
     create_file_to_write('config_save')
     #@cars = Car.where(:maker => @maker).desc(:created_at)
-    #@cars = Car.where(:maker => @maker, :parameters => nil).desc(:created_at)
-    @cars = Car.where(:maker => @maker, :from_site => @from_site).desc(:created_at)
+    @cars = Car.where(:maker => @maker, :parameters => nil, :from_site => @from_site).desc(:created_at)
+    #@cars = Car.where(:maker => @maker, :from_site => @from_site).desc(:created_at)
     puts length = @cars.count
     #return
     
@@ -169,11 +169,14 @@ class GetCarAndDetail
         puts item.to_s.length
       end
       
-      str = @doc.css('script')[5].text.to_s
+      str = @doc.css('script')[6].text.to_s
       puts "the script's length #{str.length}"
       next if str.length < 2000
       #break  
       #替换规则-单行
+      # update 2013-9-5 add the 2 lines to delete the first 
+      str.gsub!(/var levelId.*;/, '')
+      str = str.strip
       # 'var '  => '["' 行头
       str.gsub!('var ' , '{"')
       # ' = '  => '":"' 中
@@ -188,7 +191,7 @@ class GetCarAndDetail
 
       #str = "{\"root\" : [#{str}{\"end\" : \"yes\"}]}"
               
-
+#puts str
       s_json = JSON.parse(str)
 
       s_json["root"].each do |item|
@@ -249,7 +252,7 @@ class GetCarAndDetail
     end  
   
     create_file_to_write('pic_download')
-    @cars = Car.where(:maker => @maker, :from_site => @from_site).desc(:created_at)
+    @cars = Car.where(:maker => @maker,  :from_site => @from_site).desc(:created_at)
     #@cars = Car.all.asc(:created_at)
     puts @cars.length
     @cars.each_with_index do |car , c_i|
@@ -266,8 +269,12 @@ class GetCarAndDetail
         filename.gsub!('"', "_")
         
         puts item.url
-        
-        download_images(pre_folder, filename, item.url)
+         if File.exist?("./#{pre_folder}/#{filename}") 
+	  puts "exist!"
+	else
+          download_images(pre_folder, filename, item.url)
+	end
+       
 
         #break
       end
@@ -337,16 +344,26 @@ class GetCarAndDetail
   end #create_file_to_write
   
   def download_images(pre_folder, filename, url)
-    begin
+    	sleep_time = 0.34
+        retries = 2
       File.open("./#{pre_folder}/#{filename}", "wb") do |saved_file|
-        open(url, 'rb') do |read_file|
-        saved_file.write(read_file.read)
+	begin
+          open(url) do |read_file|
+            saved_file.write(read_file.read)
+          end
+        rescue StandardError,Timeout::Error, SystemCallError, Errno::ECONNREFUSED 
+          puts $!  
+          retries -= 1  
+          if retries > 0  
+            sleep sleep_time and retry  
+          else  
+ 	  #logger.error($!)
+	  #错误日志
+          #TODO Logging..  
+          end  
         end
-      end  
-    rescue OpenURI::HTTPError, StandardError,Timeout::Error, SystemCallError, Errno::ECONNREFUSED
-      puts $! 
-      @file_to_write.puts $! 
-    end
+      end
+
     
   end  #end of download_images
   

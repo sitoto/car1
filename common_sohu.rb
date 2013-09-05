@@ -318,7 +318,7 @@ class GetCarAndDetail
         puts "#{c_i} -#{p_i}"
         @file_to_write.puts "#{c_i} -#{p_i}"
         houzui = item.url.strip.from(-4)
-        puts filename = "#{item.name.strip}#{houzui.strip}"
+        filename = "#{item.name.strip}#{houzui.strip}"
         filename.gsub!("/", "_")
         filename.gsub!("\\", "_")
         filename.gsub!("*", "_")
@@ -398,7 +398,7 @@ class GetCarAndDetail
   end  
   def download_images(pre_folder, filename, url)
 	sleep_time = 0.34
-        retries = 4
+        retries = 2
       File.open("./#{pre_folder}/#{filename}", "wb") do |saved_file|
 	begin
           open(url) do |read_file|
