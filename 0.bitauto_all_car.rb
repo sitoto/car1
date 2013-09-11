@@ -20,6 +20,26 @@ items =	[["guangqifengtian", "广汽丰田", "b_guangqifengtian"],
 items =	[["shanghaidazhongsikeda", "上海大众斯柯达", "b_shanghaidazongshikeda"]]
 =end
 
+makers = Maker.where(:from_site => 'bitauto', :maker_name => '上海通用雪佛兰', :brand_name => '雪佛兰')
+puts makers.length
+
+makers.each do |m|
+	sid = m.sid 
+	webmaker = m.webname
+	maker = m.maker_name
+	folder = m.folder
+	puts "#{sid}-#{maker}-#{folder}"
+	from_site = "bitauto"
+
+#	GetCarAndDetail.new(sid, maker, from_site).read_chexi
+	GetCarAndDetail.new(sid, maker, from_site).save_pic  
+
+	GetCarAndDetail.new(sid, maker, from_site).save_config  
+
+	GetCarAndDetail.new(sid, maker, from_site).down_pic(folder)  
+	
+end
+return
 Maker.where(:from_site => 'bitauto', :status => 3).each do |m|
 	sid = m.sid 
 	maker = m.maker_name

@@ -228,17 +228,17 @@ class GetCarAndDetail
   def save_config
   #http://db.auto.sohu.com/PARA/TRIMDATA/trim_data_101893.json
   #http://db.auto.sohu.com/PARA/TRIMDATA/trim_data_101893.json
-    create_file_to_write('config_save')
+    create_file_to_write('sohu_config_save')
     #@cars = Car.where(:maker => @maker).desc(:created_at)
-    @cars = Car.where(:maker => @maker, :from_site => @from_site).desc(:created_at)
+    @cars = Car.where(:maker => @maker, :from_site => @from_site, :parameters => nil).desc(:created_at)
     puts length = @cars.count
     @cars.each_with_index do |car , i|
-      puts "#{i}/#{length}"
-      next if i < 194 
+      puts "#{i}/#{length}/#{car.chexi}"
+#      next if i < 194 
       puts url = "http://db.auto.sohu.com/model_#{car.chexi_num}/trim_#{car.chexing_num}.shtml"
 
       @doc = fetch_chexing(url)
-      car.parameters = nil
+#      car.parameters = nil
       @details = []    
       
       id_strs = []
@@ -318,15 +318,18 @@ class GetCarAndDetail
         puts "#{c_i} -#{p_i}"
         @file_to_write.puts "#{c_i} -#{p_i}"
         houzui = item.url.strip.from(-4)
-        puts filename = "#{item.name.strip}#{houzui.strip}"
+        filename = "#{item.name.strip}#{houzui.strip}"
         filename.gsub!("/", "_")
         filename.gsub!("\\", "_")
         filename.gsub!("*", "_")
         filename.gsub!('"', "_")
         puts item.url
 
-        
-        download_images(pre_folder, filename, item.url)
+        if File.exist?("./#{pre_folder}/#{filename}") 
+	  puts "exist!"
+	else
+          download_images(pre_folder, filename, item.url)
+	end
         #break
       end
       #break
@@ -395,7 +398,7 @@ class GetCarAndDetail
   end  
   def download_images(pre_folder, filename, url)
 	sleep_time = 0.34
-        retries = 4
+        retries = 2
       File.open("./#{pre_folder}/#{filename}", "wb") do |saved_file|
 	begin
           open(url) do |read_file|

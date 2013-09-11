@@ -61,7 +61,7 @@ class GemWebMakers
 
     generate(@website)    
     #export_maker_txt(from_site = @website)
-    update_maker
+#    update_maker
     #export_chexing(@website)
     
     #export_maker(@website)
@@ -202,6 +202,8 @@ end
   end
 
   def get_autohome_maker
+    makers = Maker.where(from_site: 'autohome')
+    makers.delete_all
     # open the url
     url = "http://car.autohome.com.cn/zhaoche/pinpai/"
     # get it sid, brand-** ,maker , brand
@@ -347,8 +349,8 @@ end
 end
 
 
-
-GemWebMakers.new("sohu").run
+GemWebMakers.new('autohome').run
+#GemWebMakers.new("sohu").run
 #GemWebMakers.new("bitauto").run
 #GemWebMakers.new("car388").run
 

@@ -15,17 +15,17 @@ Mongoid.load!("config/mongoid.yml")
 class GetCarAndDetail
   include Common
   
-  def initialize(sid = "shanghaidazhong", maker = "无", from_site ="bitauto")
+  def initialize(sid , maker, from_site)
     @sid = sid
     @maker = maker
     @from_site = from_site
   end
   
   def read_chexi
-    url = "http://car.bitauto.com/#{@sid}/"
+   puts  url = "http://car.bitauto.com/#{@sid}/"
     @doc = fetch_chexing(url)
-   
-    @doc.xpath('//div[@id="seriallist"]/dl/dd//b/a').each do |item|
+  puts @doc.at_css('title').text() 
+    @doc.xpath('//div[@id="seriallist"]/div/dl/dd//b/a').each do |item|
     
       puts chexi = item.at_xpath('text()').to_s.strip
       if item.at_xpath('@title') != nil
@@ -191,11 +191,20 @@ class GetCarAndDetail
         filename.gsub!("\\", "_")
         filename.gsub!("*", "_")
         filename.gsub!('"', "_")
-        File.open("./#{pre_folder}/#{filename}", "wb") do |saved_file|
-        safe_open_img(url = item.url) do |read_file|
-          saved_file.write(read_file.read)
-          end
-        end
+
+        if File.exist?("./#{pre_folder}/#{filename}") 
+	  puts "exist!"
+	else
+          download_images(pre_folder, filename, item.url)
+	end
+ 
+
+#        File.open("./#{pre_folder}/#{filename}", "wb") do |saved_file|
+#        safe_open_img(url = item.url) do |read_file|
+#          saved_file.write(read_file.read)
+#          end
+#        end
+
         #break
       end
       #break
@@ -250,6 +259,30 @@ class GetCarAndDetail
     file_path = File.join('.', "#{name}-#{Time.now.to_formatted_s(:number) }.txt")
     @file_to_write = IoFactory.init(file_path)
   end #create_file_to_write
+
+  def download_images(pre_folder, filename, url)
+    retries = 2
+    sleep_time = 0.22
+    begin
+      File.open("./#{pre_folder}/#{filename}", "wb") do |saved_file|
+        open(url, 'rb') do |read_file|
+        saved_file.write(read_file.read)
+        end
+      end  
+    rescue OpenURI::HTTPError, StandardError,Timeout::Error, SystemCallError, Errno::ECONNREFUSED
+      puts $! 
+      @file_to_write.puts $! 
+      retries -= 1  
+      if retries > 0  
+        sleep sleep_time and retry  
+      else  
+        #logger.error($!)
+        #错误日志
+        #TODO Logging..  
+      end  
+   end
+    
+  end  #end of download_images
   
   def fetch_chexing(detail_url)
     @doc_chexing = nil
