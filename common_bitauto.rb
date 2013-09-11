@@ -15,17 +15,17 @@ Mongoid.load!("config/mongoid.yml")
 class GetCarAndDetail
   include Common
   
-  def initialize(sid = "shanghaidazhong", maker = "无", from_site ="bitauto")
+  def initialize(sid , maker, from_site)
     @sid = sid
     @maker = maker
     @from_site = from_site
   end
   
   def read_chexi
-    url = "http://car.bitauto.com/#{@sid}/"
+   puts  url = "http://car.bitauto.com/#{@sid}/"
     @doc = fetch_chexing(url)
-   
-    @doc.xpath('//div[@id="seriallist"]/dl/dd//b/a').each do |item|
+  puts @doc.at_css('title').text() 
+    @doc.xpath('//div[@id="seriallist"]/div/dl/dd//b/a').each do |item|
     
       puts chexi = item.at_xpath('text()').to_s.strip
       if item.at_xpath('@title') != nil
