@@ -26,6 +26,13 @@ dataserver:
       database: automotive
       hosts:
         - 192.168.1.2:27017
+dataserver2:
+  sessions:
+    default:
+      identity_map_enabled: true
+      database: automotive
+      hosts:
+        - 192.168.2.24:27017
 
 chezhongguo:
   sessions:
