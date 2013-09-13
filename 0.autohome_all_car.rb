@@ -45,6 +45,8 @@ makers.each_with_index do |m, mindex|
   #puts mindex if m.maker_name == "众泰汽车"
   #next
 #  next if mindex < 170 
+  puts "#{m.brand_name}-#{m.maker_name}"
+#  next unless m.brand_name.eql?('荣威') and m.maker_name.eql?('上汽集团')
 
   sid = m.sid 
   webmaker = m.webname
@@ -58,16 +60,15 @@ makers.each_with_index do |m, mindex|
 #  GetCarAndDetail.new(sid, webmaker, maker, brand,  from_site).read_chexi #if m.status < 1
   #m.update_attribute(:status, 1) if m.status < 1
 #  next
-  GetCarAndDetail.new(sid, webmaker, maker, from_site).save_config #if m.status < 3
+#  GetCarAndDetail.new(sid, webmaker, maker, brand, from_site).save_config #if m.status < 3
   #m.update_attribute(:status, 3) if m.status < 3
-  next
 
-  GetCarAndDetail.new(sid, webmaker, maker, from_site).save_pic #if m.status < 2
+  #GetCarAndDetail.new(sid, webmaker, maker, brand, from_site).save_pic #if m.status < 2
   #m.update_attribute(:status, 2) if m.status < 2
 
-
-  GetCarAndDetail.new(sid, webmaker, maker, from_site).down_pic(folder) #if m.status < 4
+  GetCarAndDetail.new(sid, webmaker, maker, brand, from_site).down_pic(folder) #if m.status < 4
   #m.update_attribute(:status, 4) if m.status < 4
+  next
 
   #GetCarAndDetail.new(sid, webmaker, maker, from_site).export_report(folder)
 

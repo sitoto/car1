@@ -14,17 +14,18 @@ ENV['MONGOID_ENV'] = 'local'
 Mongoid.load!("config/mongoid.yml")
 class GetCarAndDetail
   include Common
-  
-  def initialize(sid , maker, from_site)
+   def initialize(sid = "", webmaker ="" , maker = "", brand ="",  from_site ="")
     @sid = sid
     @maker = maker
+    @brand = brand
+    @brand_num = sid 
+    @webmaker = webmaker
     @from_site = from_site
   end
   
   def read_chexi
    puts  url = "http://car.bitauto.com/#{@sid}/"
     @doc = fetch_chexing(url)
-  puts @doc.at_css('title').text() 
     @doc.xpath('//div[@id="seriallist"]/div/dl/dd//b/a').each do |item|
     
       puts chexi = item.at_xpath('text()').to_s.strip
@@ -34,40 +35,68 @@ class GetCarAndDetail
       
       puts chexi_num = item.at_xpath('@href').to_s.strip.gsub('/', '')
       chexi_url = "http://car.bitauto.com/#{chexi_num}/"
-      fetch_chexing(chexi_url)
-      puts @doc_chexing.at_xpath('//title').to_s
-      @doc_chexing.xpath('//div[@class="class"]//a').each_with_index do |link_year, i|
-        #next if i == 0
-        puts year =link_year.at_xpath('text()').to_s.strip
-        next if year == "全部在售"
-        puts year_url = "http://car.bitauto.com#{link_year.at_xpath('@href')}"
-        fetch_chexing(year_url)
-        puts @doc_chexing.at_xpath('//title').to_s
+      @doc_chexing = fetch_chexing(chexi_url)
+=begin
+      # get cars which on sale
+      @doc_chexing.xpath('//div[@class="pdL10"]/a[1]').each_with_index do |chexing_link, i|
+        chexing = chexing_link.to_s.strip_tag
+	year = chexing.split(' ')[0].to_s.strip
+        new_chexing = chexing.gsub(year, '').gsub(chexi, '').gsub(" ", '').strip
+        chexing_url = chexing_link.at_xpath('@href').to_s.strip
+	new_chexi = chexi.gsub(@maker.to_s, '').strip
 
-        @doc_chexing.xpath('//table[@id = "compare"]/tr/td[1]/a').each do |chexing_link|
+        puts "#{i}-#{@maker}-#{year}-#{new_chexi}-#{new_chexing}"
+        pic_url = "http://car.bitauto.com#{chexing_link.at_xpath('@href').to_s}tupian/"
+        chexing_num = chexing_url.split('/')[-1].to_s
+        status = 'init'
+        from_site = 'bitauto'
+
+        save_chexing(@maker, new_chexi, new_chexing, year, chexi_num, chexing_num, pic_url, @from_site, status = 'init')
+      end
+=end
+      years = []
+      first_year = @doc_chexing.at_xpath('//div[@class="class"]//a[2]/@href').to_s.strip
+#      @doc_chexing.xpath('//div[@class="class"]//a').each_with_index do |link_year, i|
+#       years <<  "http://car.bitauto.com#{link_year.at_xpath('@href')}"
+      years << "http://car.bitauto.com#{first_year}"
+      @doc_year = fetch_chexing(years[0])
+      @doc_year.xpath('//em[@class="h3_spcar"]//a').each do |other_year|
+        puts year_txt = other_year.at_xpath('text()').to_s.strip
+        next if year_txt == "全部在售"
+        puts year = other_year.at_xpath('@href').to_s.strip
+        year = year.gsub('#car_list', '')
+        years << year
+      end
+      years.uniq!
+
+#      end
+#break
+#next
+    
+      # get cars form year
+#      @doc_chexing.xpath('//div[@class="class"]//a').each_with_index do |link_year, i|
+      years.each_with_index do |link_year_url, i|
+        #next if i == 0
+        year = "#{link_year_url.split('/')[-1]}款"  #link_year.at_xpath('text()').to_s.strip
+
+        year_url = link_year_url
+        @doc_year = fetch_chexing(year_url)
+
+        @doc_year.xpath('//table[@id = "compare"]/tr/td[1]/a').each do |chexing_link|
           chexing = chexing_link.to_s.strip_tag
 	  new_chexing = chexing.gsub(year, '').gsub(chexi, '').gsub(" ", '').strip
           chexing_url = chexing_link.at_xpath('@href').to_s.strip
 	  new_chexi = chexi.gsub(@maker.to_s, '').strip
 
-          puts "#{i}-#{@maker}-#{new_chexi}-#{year}-#{new_chexing}\t#{chexing_url}"
-          puts pic_url = chexing_link.at_xpath('@href').to_s + "tupian/"
-          puts chexing_num = chexing_url.split('/')[-1].to_s
+          puts "#{i}-#{@maker}-#{new_chexi}-#{year}-#{new_chexing}"
+          pic_url = chexing_link.at_xpath('@href').to_s + "tupian/"
+          chexing_num = chexing_url.split('/')[-1].to_s
           status = 'init'
           from_site = 'bitauto'
+
+          save_chexing(@maker, new_chexi, new_chexing, year, chexi_num, chexing_num, pic_url, @from_site, status = 'init')
           
-          @car = Car.find_or_create_by(:chexing_num => chexing_num, :from_site => from_site)
-          @car.maker = @maker
-          @car.chexi = new_chexi
-          @car.chexing = new_chexing #[1..-1].strip
-          @car.year = year
-          @car.chexi_num = chexi_num
-          @car.chexing_num = chexing_num
-          @car.pic_url = pic_url
-          @car.status = status
-          @car.from_site = from_site
-          @car.save
-        end
+       end
       end
       #puts item.at_xpath('h3/a/text()').to_s.strip.split(' ')[0]
     end
@@ -79,23 +108,24 @@ class GetCarAndDetail
   
   
   def save_pic
-    @cars = Car.where(:maker => @maker, :from_site => @from_site)
+    @cars = Car.where(maker: @maker, brand: @brand,  pics: nil, from_site: @from_site).asc(:created_at)
+
     puts @cars.length
     @cars.each_with_index do |car, i|
-      fetch_chexing(car.pic_url)
+      @doc_pic_url = fetch_chexing(car.pic_url)
       puts car.pic_url
       
-      have_error = @doc_chexing.xpath('//div[@class="error_page"]').length
+      have_error = @doc_pic_url.xpath('//div[@class="error_page"]').length
       if have_error == 1
         puts 'no picture'
         puts car.pic_num = 0
         car.save
       else
         puts 'have picture'
-        @doc_chexing.xpath('//h3[@class="pic13_h3"]/span/a').each do |object|
+        @doc_pic_url.xpath('//h3[@class="pic13_h3"]/span/a').each do |object|
           if object.at_xpath('text()').to_s == '外观'
             puts new_pic_url = object.at_xpath('@href').to_s
-            fetch_img(new_pic_url)
+            @doc_img = fetch_img(new_pic_url)
             imgs = []
             @doc_img.xpath('//ul[@class="pic_t_box pic_150100 pic13_150100"]/li/a').each_with_index do |item, j|
               break if j > 7
@@ -120,12 +150,7 @@ class GetCarAndDetail
           end
         end
       end
-        
-      
-      
       #break if have_error == 0
-      
-      
     end
   end
 
@@ -198,67 +223,41 @@ class GetCarAndDetail
           download_images(pre_folder, filename, item.url)
 	end
  
-
-#        File.open("./#{pre_folder}/#{filename}", "wb") do |saved_file|
-#        safe_open_img(url = item.url) do |read_file|
-#          saved_file.write(read_file.read)
-#          end
-#        end
-
         #break
       end
       #break
     end    
   end
   
-    def export_report(name = "report")
-    create_file_to_write(name)
-    @cars = Car.where(:maker => @maker, :from_site => @from_site).desc(:chexi_num)
-    length = @cars.count
-    @title2 = []
-
-    @title1 = ["品牌","车系", "年款", "名称", "图片前缀","张数", "来源"]
-
-    @cars.all.each_with_index do |car, i|
-      print "#{i} "
-      car.parameters.each do |param|
-          #str << "#{param.value}\t"
-          @title2 << param.name
-          #puts "#{param.name}\t#{param.value}"
-      end
-      @title2.uniq!
-      
-    end
-    @title = @title1 + @title2
-    @file_to_write.puts @title.join('$')
-
-    @cars.all.each_with_index do |car, i|
-      print "#{i} "
-      str = ""
-      @title2.each do |title|  
-        car.parameters.each do |param|
-        
-          if (title == param.name && title != "车身颜色")
-            txt_str = param.value
-            #txt_str = CGI::unescape(txt_str)
-            #txt_str.color_str_to_line
-            str << txt_str
-          end
-        end
-        str << "\t"
-        
-      end
-      qianzui = "#{car.maker}_#{car.chexi}_#{car.year}_#{car.chexing}"
-      @file_to_write.puts "#{car.maker}\t#{car.chexi}\t#{car.year}\t#{car.chexing}\t#{qianzui}\t#{car.pic_num}\t#{car.from_site}\t#{str}"
-      #break
-    end    
-  end
-  
+ 
   private  
   def create_file_to_write(name = 'file')
     file_path = File.join('.', "#{name}-#{Time.now.to_formatted_s(:number) }.txt")
     @file_to_write = IoFactory.init(file_path)
   end #create_file_to_write
+
+  def save_chexing(maker, chexi, chexing, year, chexi_num, chexing_num, pic_url, from_site, status = 'init')
+   # @car = Car.where(:chexing_num => chexing_num.to_s, :from_site => from_site)
+    #return if @car.length > 0
+#    @car = Car.create(:chexing_num => chexing_num.to_s, :from_site => from_site)
+    @car = Car.find_or_create_by(:chexing_num => chexing_num.to_s, :from_site => from_site)
+  
+    @car.brand = @brand
+    @car.brand_num = @brand_num
+                    
+    @car.maker = maker
+    @car.chexi = chexi
+    @car.chexing = chexing
+    @car.year = year
+    @car.chexi_num = chexi_num.to_s
+    @car.pic_url = pic_url
+    @car.status = status
+
+    @car.save  
+    puts "#{@brand}-#{@brand_num}-#{maker}-#{year}-#{chexi}-#{chexing}-saved!"
+  end #end of save_chexing 
+  
+
 
   def download_images(pre_folder, filename, url)
     retries = 2
@@ -285,22 +284,18 @@ class GetCarAndDetail
   end  #end of download_images
   
   def fetch_chexing(detail_url)
-    @doc_chexing = nil
     html_stream = safe_open(detail_url , retries = 3, sleep_time = 0.2, headers = {})
 #    begin
 #    html_stream.encode!('utf-8', 'gbk', :invalid => :replace) #忽略无法识别的字符
 #    rescue StandardError,Timeout::Error, SystemCallError, Errno::ECONNREFUSED #有些异常不是标准异常  
 #     puts $!  
 #    end
-    @doc_chexing = Nokogiri::HTML(html_stream)
+    Nokogiri::HTML(html_stream)
   end  
   def fetch_img(detail_url)
-    @doc_img = nil
     html_stream = safe_open(detail_url , retries = 3, sleep_time = 0.2, headers = {})
-    @doc_img = Nokogiri::HTML(html_stream)
+    Nokogiri::HTML(html_stream)
   end
   
-  
 end
-
 

@@ -186,13 +186,11 @@ end
         year = year.gsub(/\t|\n|\r/, '').strip
         puts year = year.from(3).strip
         
-        
         @model = Model.find_or_create_by(:maker_name => maker_name, :chexing_name => chexing, year => year, :from_site => @website)
         @model.year = year
         @model.url = maker_url
         @model.desc = desc
         @model.save
-
   
         #@file_to_write.puts "#{maker_name}\t#{chexing}\t#{year}"
       end
@@ -282,12 +280,9 @@ end
   def export_maker_txt(from_site)
     create_file_to_write(from_site)
     @makers = Maker.where(:from_site => from_site).desc(:webname)
-    
     @makers.each do |maker|
       @file_to_write.puts "#{maker.sid}\t#{maker.brand_name}\t#{maker.webname}\t#{maker.maker_name}"
     end
-    
-    
   end
   
   def create_file_to_write(name = 'file')
@@ -297,11 +292,11 @@ end
 
   def fetch_doc(url)
     html_stream = safe_open(url , retries = 3, sleep_time = 0.2, headers = {})
-#    begin
-    html_stream.encode!('utf-8', 'gbk', :invalid => :replace) #忽略无法识别的字符
-#    rescue StandardError,Timeout::Error, SystemCallError, Errno::ECONNREFUSED #有些异常不是标准异常  
-#     puts $!  
-#    end
+    # begin
+    # html_stream.encode!('utf-8', 'gbk', :invalid => :replace) #忽略无法识别的字符
+    # rescue StandardError,Timeout::Error, SystemCallError, Errno::ECONNREFUSED #有些异常不是标准异常  
+    # puts $!  
+    # end
     Nokogiri::HTML(html_stream)
   end
 
@@ -310,13 +305,10 @@ end
   end #end of open_http
   
   def save_maker(sid, brand_name, maker_name, webname, brand_url, maker_url, folder,  from_site)
-  
     len = Maker.where(:brand_name => brand_name, :webname => webname, :from_site => from_site).length
-    
     if len == 0
       puts "#{brand_name}-#{webname}-#{maker_name}"
       @maker = Maker.find_or_create_by(:brand_name => brand_name, :webname => webname, :from_site => from_site)
-      
       @maker.sid = sid
       @maker.maker_name = maker_name
       @maker.brand_url = brand_url
@@ -330,8 +322,7 @@ end
   def update_maker
     puts @website
     puts Maker.where(:from_site => @website).length
-    
-#   Car.where(:from_site => 'autohome').only(:maker).each do |u|
+    #Car.where(:from_site => 'autohome').only(:maker).each do |u|
     Car.where(from_site: @website).distinct(:maker).each do |u|
       puts u  
       #next
@@ -348,10 +339,9 @@ end
   end
 end
 
-
-GemWebMakers.new('autohome').run
+#GemWebMakers.new('autohome').run
 #GemWebMakers.new("sohu").run
-#GemWebMakers.new("bitauto").run
+GemWebMakers.new("bitauto").run
 #GemWebMakers.new("car388").run
 
 

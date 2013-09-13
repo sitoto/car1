@@ -138,7 +138,9 @@ class GetCarAndDetail
   
   
   def save_pic
-    @cars = Car.where(:maker => @maker, :from_site => @from_site, :status => 'update')
+#    @cars = Car.where(:maker => @maker, :from_site => @from_site, :status => 'update')
+    @cars = Car.where(maker: @maker, brand: @brand,  pics: nil, from_site: @from_site).asc(:created_at)
+
     puts @cars.length
     @cars.each do |car|
       fetch_chexing(car.pic_url)
@@ -164,16 +166,16 @@ class GetCarAndDetail
   def save_config
     create_file_to_write('config_save')
     #@cars = Car.where(:maker => @maker).desc(:created_at)
-    @cars = Car.where(:maker => @maker, :parameters => nil, :from_site => @from_site, :status => 'update').desc(:created_at)
+    @cars = Car.where(maker: @maker, brand: @brand,  parameters: nil, from_site: @from_site).desc(:created_at)
     #@cars = Car.where(:maker => @maker, :from_site => @from_site).desc(:created_at)
     puts length = @cars.count
-    #return
+#    return
     
     @cars.all.each_with_index do |car, i|
       @num = 0
       #next if i < 100
       params = []
-      print "#{i}/#{length} "
+      print "#{@brand}-#{@maker}-#{i}/#{length} "
       puts url = "http://www.autohome.com.cn/spec/#{car.chexing_num}/config.html"
       @file_to_write.puts "#{i}-#{url}"
       html_stream = open_http(url).strip
@@ -263,7 +265,7 @@ class GetCarAndDetail
       
       car.parameters =  params
       car.save
-      puts "save"
+      puts "saved!"
     end
   end
   
@@ -275,7 +277,9 @@ class GetCarAndDetail
     end  
   
     create_file_to_write('pic_download')
-    @cars = Car.where(:maker => @maker,  :from_site => @from_site, :status => 'update').desc(:created_at)
+#    @cars = Car.where(:maker => @maker,  :from_site => @from_site, :status => 'update').desc(:created_at)
+    @cars = Car.where(maker: @maker, brand: @brand,  from_site: @from_site).asc(:created_at)
+
     #@cars = Car.all.asc(:created_at)
     puts @cars.length
     @cars.each_with_index do |car , c_i|
@@ -297,7 +301,6 @@ class GetCarAndDetail
 	else
           download_images(pre_folder, filename, item.url)
 	end
-       
 
         #break
       end
