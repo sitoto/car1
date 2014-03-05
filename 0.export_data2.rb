@@ -167,9 +167,10 @@ class GetCarAndDetail
   end
   
   def export_cars_parameter_empty
-    cars = Car.where(brand: nil, from_site: 'autohome')
+    create_file_to_write('autohome')
+    cars = Car.where(from_site: 'autohome')
     cars.each_with_index do |car|
-      puts "#{car.maker}-#{car.chexi}-#{car.chexi_num}-#{car.chexing}-#{car.chexing_num}-#{car.year}"
+      @file_to_write.puts "#{car.brand}\t#{car.maker}\t#{car.chexi}\t#{car.chexi_num}\t#{car.chexing}\t#{car.chexing_num}\t#{car.year}"
     end
   end
   
@@ -194,6 +195,10 @@ class GetCarAndDetail
     @file_to_write = IoFactory.init(file_path)
   end #create_file_to_write
 end
+
+maker = "荣威"
+GetCarAndDetail.new(maker, "autohome").export_cars_parameter_empty
+return
 maker = "荣威"
 maker = "上汽荣威"
 maker = "宝骏"

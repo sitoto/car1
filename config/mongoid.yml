@@ -12,6 +12,13 @@ local:
       database: automotive
       hosts:
         - 127.0.0.1:27017
+saidan:
+  sessions:
+    default:
+      identity_map_enabled: true
+      database: autohomesaidan
+      hosts:
+        - 127.0.0.1:27017
 test:
   sessions:
     default:
@@ -19,26 +26,4 @@ test:
       database: test
       hosts:
         - 127.0.0.1:27017
-dataserver:
-  sessions:
-    default:
-      identity_map_enabled: true
-      database: automotive
-      hosts:
-        - 192.168.1.2:27017
-dataserver2:
-  sessions:
-    default:
-      identity_map_enabled: true
-      database: automotive
-      hosts:
-        - 192.168.2.24:27017
-
-chezhongguo:
-  sessions:
-    default:
-      identity_map_enabled: true	
-      database: chezhongguo
-      hosts:
-        - www.baigoosoft.com:27017
 

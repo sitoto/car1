@@ -36,7 +36,16 @@ class GetCarAndDetail
       
     end
 =end
-    @cars = Car.where(brand: @brand, maker: @maker, from_site: @from_site)#.in(maker: ['宝骏', '五菱']);     
+    #@cars = Car.where(brand: @brand, maker: @maker, from_site: @from_site)#.in(maker: ['宝骏', '五菱']);     
+    #@cars = Car.where(maker: @maker, from_site: @from_site)#.in(maker: ['宝骏', '五菱']);     
+    
+    #@cars = Car.where(from_site: 'autohome').in(maker: ['长城汽车']);     
+    #@cars = Car.where(from_site: 'bitauto').in(maker: ['长城', '哈弗']);     
+    @cars = Car.where(from_site: 'sohu').in(maker: ['长城', '哈弗']);     
+
+
+    
+    
     database_export
   
   end
@@ -99,10 +108,16 @@ class GetCarAndDetail
 end
 
 
-brand = "荣威"
-maker = "上汽集团"
-from_site = 'autohome'
+brand = "日产"
+maker = "郑州日产"
+from_site = 'sohu'
 GetCarAndDetail.new(brand, maker, from_site).export_report(from_site)
+
+from_site = 'bitauto'
+#GetCarAndDetail.new(brand, maker, from_site).export_report(from_site)
+
+from_site = 'sohu'
+#GetCarAndDetail.new(brand, maker, from_site).export_report(from_site)
 
 #GetCarAndDetail.new(maker, "sohu").export_report("sohu")
 
